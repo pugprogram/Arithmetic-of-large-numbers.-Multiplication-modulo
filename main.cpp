@@ -1,7 +1,9 @@
-#include<iostream>
-#include <fstream>
-#include<stdlib.h>
 #include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <time.h>
+#include <math.h>
+#include <stdbool.h>
 
 //2^63, так как число 2^64 не помещается в стандартный тип данных языка C (даже самый большой)
 //поэтому при реализации деления на 2^64 делим сначала на 2^63, а затем побитово сдвигаем на 1
@@ -9,7 +11,7 @@
 // значение юудет храниться в n 
 //я искусственно увеличила тип (в рефале unsigned long, но у меня может не вместиться даже в long long )
 
- typedef struct link{
+typedef struct link{
 	char ptype; /* type of the link */
 	union
 		{
@@ -23,49 +25,14 @@
 		} pair;
 	struct link *prec; /* ptr to preceding link */
 	struct link *foll; /* ptr to following link */
-} LINK;
+}LINK;
+
+#define NEXT(q)    ((q)->foll)
+#define PREV(q)    ((q)->prec)
+#define TYPE(q)    ((q)->ptype)
 
 
-unsigned long long* read_num_from_file(unsigned long long* array){
-    array[0]=0;
-    array[1]=0;
-    FILE* fp;
-    char name[]="example.txt";
-    unsigned long long number = 0;
-    if ((fp= fopen(name,"r"))==NULL){
-        printf("Error!");
-        array[0]=-1;
-        array[1]=-1;
-        return array;
-    }
-    char one_symbol;
-    bool flag=false;
-    while ((one_symbol=fgetc(fp))!=EOF){
-        if ((one_symbol=='\n') and (!flag)){
-            flag=true;
-            continue;
-        }
-        if ((one_symbol=='\n') and (flag)) break;
-        if (!flag) array[0]=array[0]*10+one_symbol-'0';
-        if (flag) array[1]=array[1]*10+one_symbol-'0';
-    }
-    return array;
-}
 
-//Проверка работоспособности производилась на переводе в двоичную систему счисления
-LINK* save_in_Link(LINK* p, unsigned long long number){
-    p=(LINK*)malloc (sizeof(LINK));
-    p->prec=NULL;
-    p->foll=NULL;
-    unsigned long long one_num=number;
-    number=number>>63;
-    number=number>>1;
-    unsigned long long dop_peremenaya_for_ostatok=number<<63;
-    dop_peremenaya_for_ostatok=number<<1;
-    p->pair.n=one_num-dop_peremenaya_for_ostatok;
-    if (number) p->foll=save_in_Link(p->foll,number);
-    return p;
-}
 
 unsigned long long Print_Link_decimal_system(LINK *p, int num,unsigned long long answer){
     if (p!=NULL){
@@ -84,28 +51,114 @@ unsigned long long Print_Link_decimal_system(LINK *p, int num,unsigned long long
 
 
 
+
+
+char* Copy_and_add(char* chastnoe,char dopper){
+    char* dop_str=malloc(sizeof(char)*(strlen(chastnoe)+2));
+    for (unsigned long long i=0;i<strlen(chastnoe);i++){
+        dop_str[i]=chastnoe[i];
+    }
+    dop_str[strlen(chastnoe)]=dopper;
+    dop_str[strlen(chastnoe)+1]='\0';
+    free(chastnoe);
+    chastnoe=malloc(sizeof(char)*(strlen(dop_str)+1));
+    for (unsigned long long i=0;i<strlen(dop_str);i++){
+        chastnoe[i]=dop_str[i];
+    }
+    chastnoe[strlen(dop_str)]='\0';
+    free(dop_str);
+
+    return chastnoe;
+
+}
+
+
+
+char* read_num_from_file_2(char* chastnoe){
+    char* res=malloc(2);
+    res[1]='\0';
+    FILE* fp;
+    char name[]="example.txt";
+    if ((fp= fopen(name,"r"))==NULL){
+        printf("Error!");
+        return NULL;
+    }
+    char one_symbol;
+    int number=0;
+    int ostatok=0;
+    int kolvo=0;
+    char prev_symbol;
+    while ((one_symbol=fgetc(fp))!=EOF){
+        if (one_symbol=='\n'){
+            res[0]=(number+'0');
+            break; 
+        }
+        number=(number*10)+one_symbol-'0';
+        if (number<2){
+           if (strlen(chastnoe)){
+                chastnoe=Copy_and_add(chastnoe,'0');
+           }
+            continue;
+        }
+        int dopper=number>>1;
+        chastnoe=Copy_and_add(chastnoe,(dopper+'0'));
+        number=number - (dopper<<1);
+    }
+    while (true){
+        number=0;
+        char* dopchastnoe;
+        dopchastnoe=malloc(1);
+        dopchastnoe[0]='\0';
+        if (strlen(chastnoe)==1){
+                int num=chastnoe[0]-'0';
+                if (num<2){
+                     res=Copy_and_add(res,chastnoe[0]);
+                     break;
+                }      
+        }
+        for (unsigned long long i=0;i<strlen(chastnoe);i++){
+            number=(number*10)+(chastnoe[i]-'0');
+            if (number<2){
+                if (strlen(dopchastnoe)){
+                    dopchastnoe=Copy_and_add(dopchastnoe,'0');
+                }
+            continue;
+            }
+            int dopper=number>>1;
+            dopchastnoe=Copy_and_add(dopchastnoe,(dopper+'0'));
+            number=number - (dopper<<1);
+        }
+        res=Copy_and_add(res,(number+'0'));
+        free(chastnoe);
+        chastnoe=malloc(sizeof(char)*(strlen(dopchastnoe)+1));
+        for (unsigned long long i=0;i<strlen(dopchastnoe);i++) chastnoe[i]=dopchastnoe[i];
+        chastnoe[strlen(dopchastnoe)]='\0';
+        free(dopchastnoe);
+    }
+    return res;
+}
+
+LINK* filling_structure(LINK* p){
+
+}
+
+
 void Print_Link(LINK* p){
     if (p!=NULL){
-        printf("%lld",p->pair.n);
+        printf("%lld\n",p->pair.n);
         Print_Link(p->foll);
     }
 }
 
+
+
 int main(){
-    unsigned long long* array_for_num=NULL;
-    array_for_num=(unsigned long long*)malloc(2*sizeof(unsigned long long));
-    array_for_num = read_num_from_file(array_for_num);
-    if (array_for_num[0]==-1) return 0;
-    LINK* first_num=NULL;
-    first_num=save_in_Link(first_num,array_for_num[0]);
-    LINK* second_num=NULL;
-    second_num=save_in_Link(second_num,array_for_num[1]);
-    //Print_Link(p);
-    unsigned long long answer = 0;
-    answer = Print_Link_decimal_system(first_num,0,answer);
-    printf("%lld\n",answer);
-    answer=0;
-    answer=Print_Link_decimal_system(second_num,0,answer);
-    printf("%lld",answer);
+    LINK* first_number;
+    first_number=NULL;
+    char* chastnoe=malloc(sizeof(char)*1);
+    chastnoe[0]='\0';
+    char* res;
+    res=read_num_from_file_2(chastnoe);
+    for(unsigned long long i=0;i<strlen(res);i++) printf("%c",res[i]);
     return 0;
 }
