@@ -5,12 +5,6 @@
 #include <math.h>
 #include <stdbool.h>
 
-//2^63, так как число 2^64 не помещается в стандартный тип данных языка C (даже самый большой)
-//поэтому при реализации деления на 2^64 делим сначала на 2^63, а затем побитово сдвигаем на 1
-//#define MODULE 0b10000000000000000000000000000000000000000000000000000000000000000
-// значение юудет храниться в n 
-//я искусственно увеличила тип (в рефале unsigned long, но у меня может не вместиться даже в long long )
-
 typedef struct link{
 	char ptype; /* type of the link */
 	union
@@ -30,25 +24,6 @@ typedef struct link{
 #define NEXT(q)    ((q)->foll)
 #define PREV(q)    ((q)->prec)
 #define TYPE(q)    ((q)->ptype)
-
-
-
-
-unsigned long long Print_Link_decimal_system(LINK *p, int num,unsigned long long answer){
-    if (p!=NULL){
-        unsigned long long dopper = p->pair.n;
-        int num2=num;
-        while (num2){
-            dopper=dopper<<63;
-            dopper=dopper<<1;
-            num2--;
-        }
-        answer=answer+dopper;
-        answer=Print_Link_decimal_system(p->foll,num+1,answer);
-    }
-    return answer;
-}
-
 
 
 
@@ -104,6 +79,7 @@ char* read_num_from_file_2(char* chastnoe){
         chastnoe=Copy_and_add(chastnoe,(dopper+'0'));
         number=number - (dopper<<1);
     }
+    res=Copy_and_add(res,(number+'0'));
     while (true){
         number=0;
         char* dopchastnoe;
@@ -112,7 +88,7 @@ char* read_num_from_file_2(char* chastnoe){
         if (strlen(chastnoe)==1){
                 int num=chastnoe[0]-'0';
                 if (num<2){
-                     res=Copy_and_add(res,chastnoe[0]);
+                    res=Copy_and_add(res,(num+'0'));
                      break;
                 }      
         }
@@ -138,8 +114,22 @@ char* read_num_from_file_2(char* chastnoe){
     return res;
 }
 
-LINK* filling_structure(LINK* p){
-
+LINK* filling_structure(LINK* p,char* binary,int i){
+    unsigned long long multiplier=1;
+    p=(LINK*)malloc(sizeof(LINK));
+    p->foll=NULL;
+    p->prec=NULL;
+    p->ptype='d';
+    unsigned long long num=0;
+    unsigned long long dop_i=i;
+    for (i;(i<dop_i+63)&&(i<strlen(binary));i++){
+        num+=(binary[i]-'0')*multiplier;
+        multiplier=multiplier<<1;
+        printf("\n%lld\n",num);
+    }
+    p->pair.n=num;
+    if (i<(strlen(binary)-1)) p->foll=filling_structure(p->foll,binary,i);
+    return p;
 }
 
 
@@ -160,5 +150,8 @@ int main(){
     char* res;
     res=read_num_from_file_2(chastnoe);
     for(unsigned long long i=0;i<strlen(res);i++) printf("%c",res[i]);
+    printf("\n");
+    first_number=filling_structure(first_number,res,0);
+    Print_Link(first_number);
     return 0;
 }
