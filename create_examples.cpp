@@ -142,11 +142,83 @@ LINK* filling_structure(LINK* p,char* binary,int i,bool flag_chetn,bool flag_ent
 
 void Print_Link(LINK* p){
     if (p!=NULL){
-        printf("%lld\n",p->pair.n);
+        printf("%ld\n",p->pair.n);
         Print_Link(p->foll);
     }
 }
 
+
+
+
+char* Add_large_numbers(char* num1, char* num2){
+    unsigned long len1=strlen(num1);
+    unsigned long len2=strlen(num2);
+    unsigned long len=0;
+    char* dopstr;
+    char* new_num1;
+    char* new_num2;
+    if (len1<len2){
+        len=len2-len1;
+        dopstr=malloc(sizeof(char)*(len2+1));
+        dopstr[len2]='\0';
+        for (unsigned long i=0;i<len;i++){
+            dopstr[i]='0';
+        }
+        for (unsigned long i=len,j=0;i<len+len1;i++,j++) {
+            dopstr[i]=num1[j];
+        }
+        new_num1=malloc(sizeof(char)*(len2+1));
+        new_num1[len2]='\0';
+        for (unsigned i=0;i<len2;i++) new_num1[i]=dopstr[i];
+        new_num2=malloc(sizeof(char)*(len2+1));
+        new_num2[len2]='\0';
+        for (unsigned i=0;i<len2;i++) new_num2[i]=num2[i];
+        free(dopstr);
+    }
+    if (len1>len2){
+        len=len1-len2;
+        dopstr=malloc(sizeof(char)*(len1+1));
+        dopstr[len1]='\0';
+        for (unsigned long i=0;i<len;i++){
+            dopstr[i]='0';
+        }
+        for (unsigned long i=len,j=0;i<len+len2;i++,j++) {
+            dopstr[i]=num2[j];
+        }
+        new_num2=malloc(sizeof(char)*(len1+1));
+        new_num2[len1]='\0';
+        for (unsigned i=0;i<len1;i++) new_num2[i]=dopstr[i];
+        new_num1=malloc(sizeof(char)*(len1+1));
+        new_num1[len1]='\0';
+        for (unsigned i=0;i<len1;i++) new_num1[i]=num1[i];
+        free(dopstr);
+    }
+    len=strlen(new_num1);
+    char* res=malloc(sizeof(char)*(len+2));
+    res[len+1]='\0';
+    for (unsigned long i=0;i<len+1;i++) res[i]='0';
+    for (unsigned long i=len,j=len-1;i>0;i--,j--){
+        int num=(new_num1[j]-'0')+(new_num2[j]-'0');
+        int dop_res=(res[i]-'0')+num;
+        res[i]=((((res[i]-'0')+num)%10)+'0');
+        res[i-1]=((((res[i-1]-'0')+dop_res)/10)+'0');
+    }
+    if (res[0]=='0'){
+        len=strlen(res);
+        dopstr=malloc(sizeof(char)*(len));
+        dopstr[len-1]='\0';
+        for (unsigned long j=1;j<len;j++) dopstr[j-1]=res[j];
+        return dopstr;
+    }
+    return res;
+}
+
+
+
+char* Return_in_decimal_system(LINK* p){
+
+
+}
 
 
 int main(){
@@ -160,5 +232,9 @@ int main(){
     printf("\n");
     first_number=filling_structure(first_number,res,0,false,false);
     Print_Link(first_number);
+    res= Add_large_numbers("9339480928302","398394208930242");
+    printf("\n");
+    for (int i=0;i<strlen(res);i++) printf("%c",res[i]);
+    printf("\n");
     return 0;
 }
