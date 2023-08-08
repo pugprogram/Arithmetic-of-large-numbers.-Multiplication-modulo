@@ -49,23 +49,19 @@ char* Copy_and_add(char* chastnoe,char dopper){
 
 
 
-char* read_num_from_file_2(char* chastnoe){
+
+char* read_num_from_file_2(char* chastnoe,FILE* fp){
     char* res=malloc(2);
     res[1]='\0';
-    FILE* fp;
-    char name[]="example.txt";
-    if ((fp= fopen(name,"r"))==NULL){
-        printf("Error!");
-        return NULL;
-    }
     char one_symbol;
     int number=0;
     int ostatok=0;
     int kolvo=0;
     char prev_symbol;
     bool flag = false;
-    while ((one_symbol=fgetc(fp))!=EOF){
-        if (one_symbol=='\n'){
+    while (true){
+        one_symbol=fgetc(fp);
+        if ((one_symbol=='\n')||(one_symbol==EOF)){
             res[0]=(number+'0');
             break; 
         }
@@ -283,11 +279,7 @@ char* Return_in_decimal_system(LINK* p){
         snprintf(coeff,sizeof coeff,"%ld",q->pair.n);
         char* dopper;
         dopper=Multyplication_large_numbers(coeff,mnog);
-        for (int i=0;i<strlen(dopper);i++) printf("%c",dopper[i]);
-        printf("\n");
         res=Add_large_numbers(res,dopper);
-        for (int i=0;i<strlen(res);i++) printf("%c",dopper[i]);
-        printf("\n");
         free(dopper);
         mnog=Multyplication_large_numbers(mnog,"4294967296");
         q=q->foll;
@@ -299,12 +291,13 @@ void Printf_in_sixteenfour_system(LINK* p){
     if ((p!=NULL)&&(p->foll!=NULL)){
         unsigned long long senior_coeff=p->foll->pair.n;
         char Senior_coeff_str [30];
-        senior_coeff=senior_coeff<<32;
         snprintf(Senior_coeff_str,sizeof Senior_coeff_str,"%lld",senior_coeff);
+        char* res;
+        res=Multyplication_large_numbers(Senior_coeff_str,"4294967296");
         char* for_printf;
         char junior_coeff[30];
         snprintf(junior_coeff,sizeof junior_coeff,"%ld",p->pair.n);
-        for_printf=Add_large_numbers(Senior_coeff_str,junior_coeff);
+        for_printf=Add_large_numbers(res,junior_coeff);
         for (unsigned long i=0;i<strlen(for_printf);i++) printf("%c",for_printf[i]);
         printf("\n");
         Printf_in_sixteenfour_system(p->foll->foll);
@@ -312,23 +305,41 @@ void Printf_in_sixteenfour_system(LINK* p){
 }
 
 
+
+
 int main(){
     LINK* first_number;
     first_number=NULL;
     char* chastnoe=malloc(sizeof(char)*1);
     chastnoe[0]='\0';
-    char* res;
-    res=read_num_from_file_2(chastnoe);
+    char* num1;
+    FILE* fp;
+    char name[]="example.txt";
+    if ((fp= fopen(name,"r"))==NULL){
+        printf("Error!");
+        return 0;
+    }
+    num1=read_num_from_file_2(chastnoe,fp);
+    free(chastnoe);
+    chastnoe=malloc(sizeof(char)*1);
+    chastnoe[0]='\0';
+    char* num2;
+    num2=read_num_from_file_2(chastnoe,fp);
+    fclose(fp);
     printf("...........Binary........\n");
-    for(unsigned long long i=0;i<strlen(res);i++) printf("%c",res[i]);
+    for(unsigned long long i=0;i<strlen(num1);i++) printf("%c",num1[i]);
+    printf("\n");
+    for(unsigned long long i=0;i<strlen(num2);i++) printf("%c",num2[i]);
     printf("\n\n........2^32...........\n");
-    first_number=filling_structure(first_number,res,0,false,false);
+    first_number=filling_structure(first_number,num1,0,false,false);
     Print_Link(first_number);
+    printf("\n");
+    LINK* second_number;
+    second_number=filling_structure(second_number,num2,0,false,false);
+    Print_Link(second_number);
     printf("\n........2^64...........\n");
     Printf_in_sixteenfour_system(first_number);
-    res=Return_in_decimal_system(first_number);
-    printf("\n........10...........\n");
-    for(unsigned long long i=0;i<strlen(res);i++) printf("%c",res[i]);
     printf("\n");
+    Printf_in_sixteenfour_system(second_number);
     return 0;
 }
