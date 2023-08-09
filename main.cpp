@@ -305,6 +305,104 @@ void Printf_in_sixteenfour_system(LINK* p){
 }
 
 
+unsigned long long Size_Link(LINK* p){
+    unsigned long long size=0;
+    while (p!=NULL) {
+        size+=1;
+        p=p->foll;
+    }
+    return size;
+}
+
+
+
+
+
+
+LINK* alghorithm_multyplication(LINK* first_num,LINK* second_num){
+    LINK* res=NULL;
+    res=(LINK*)malloc(sizeof(LINK));
+    res->foll=NULL;
+    res->prec=NULL;
+    res->pair.n=0;
+    unsigned long long size_first_num=Size_Link(first_num);
+    unsigned long long size_second_num=Size_Link(second_num);
+    if ((size_first_num>size_second_num)||(size_first_num==size_second_num)){
+        LINK* dop_for_res=res;
+        LINK* dop_for_res2=res;
+        LINK* dop_for_first_num=first_num;
+        while (second_num!=NULL){
+        while (dop_for_first_num!=NULL){
+            unsigned long long mnog=0;
+            mnog=second_num->pair.n*dop_for_first_num->pair.n;
+            if (dop_for_res2==NULL){
+                dop_for_res2=(LINK*)malloc(sizeof(LINK));
+                dop_for_res2->foll=NULL;
+                dop_for_res2->prec=NULL;
+                dop_for_res2->pair.n=0;
+            }
+            mnog=dop_for_res2->pair.n+mnog;
+            unsigned long mainpart=mnog>>32;
+            unsigned long ost=mnog-(mainpart<<32);
+            dop_for_res2->pair.n=ost;
+            if (mainpart){
+                if (dop_for_res2->foll==NULL){
+                    dop_for_res2->foll=(LINK*)malloc(sizeof(LINK));
+                    dop_for_res2->foll->pair.n=0;
+                    dop_for_res2->foll->foll=NULL;
+                    dop_for_res2->foll->prec=NULL;
+                }
+                dop_for_res2->foll->pair.n+=mainpart;
+            }
+            dop_for_res2=dop_for_res2->foll;
+            dop_for_first_num=dop_for_first_num->foll;
+        }
+        dop_for_first_num=first_num;
+        second_num=second_num->foll;
+        dop_for_res=dop_for_res->foll;
+        dop_for_res2=dop_for_res;
+        }
+    }
+    else{
+        LINK* dop_for_res=res;
+        LINK* dop_for_res2=res;
+        LINK* dop_for_second_num=second_num;
+        while (first_num!=NULL){
+        while (dop_for_second_num!=NULL){
+            unsigned long long mnog=0;
+            mnog=first_num->pair.n*dop_for_second_num->pair.n;
+            if (dop_for_res2==NULL){
+                dop_for_res2=(LINK*)malloc(sizeof(LINK));
+                dop_for_res2->foll=NULL;
+                dop_for_res2->prec=NULL;
+                dop_for_res2->pair.n=0;
+            }
+            mnog=dop_for_res2->pair.n+mnog;
+            unsigned long mainpart=mnog>>32;
+            unsigned long ost=mnog-(mainpart<<32);
+            dop_for_res2->pair.n=ost;
+            if (mainpart){
+                if (dop_for_res2->foll==NULL){
+                    dop_for_res2->foll=(LINK*)malloc(sizeof(LINK));
+                    dop_for_res2->foll->pair.n=0;
+                    dop_for_res2->foll->foll=NULL;
+                    dop_for_res2->foll->prec=NULL;
+                }
+                dop_for_res2->foll->pair.n+=mainpart;
+            }
+            dop_for_res2=dop_for_res2->foll;
+            dop_for_second_num=dop_for_second_num->foll;
+        }
+        dop_for_second_num=second_num;
+        first_num=first_num->foll;
+        dop_for_res=dop_for_res->foll;
+        dop_for_res2=dop_for_res;
+        }    
+    }
+    return res;
+}
+
+
 
 
 int main(){
@@ -337,9 +435,19 @@ int main(){
     LINK* second_number;
     second_number=filling_structure(second_number,num2,0,false,false);
     Print_Link(second_number);
+    printf("\n");
+
+    LINK* res;
+    res=alghorithm_multyplication(first_number,second_number);
+    char* check;
+    check=Return_in_decimal_system(res);
+    for (int i=0;i<strlen(check);i++) printf("%c",check[i]);
+    //Print_Link(res);
+    /*
     printf("\n........2^64...........\n");
     Printf_in_sixteenfour_system(first_number);
     printf("\n");
     Printf_in_sixteenfour_system(second_number);
+    */
     return 0;
 }
