@@ -4,6 +4,7 @@
 #include <time.h>
 #include <math.h>
 #include <stdbool.h>
+#include <time.h>
 
 typedef struct link{
 	char ptype; /* type of the link */
@@ -424,24 +425,32 @@ int main(){
     char* num2;
     num2=read_num_from_file_2(chastnoe,fp);
     fclose(fp);
-    printf("...........Binary........\n");
-    for(unsigned long long i=0;i<strlen(num1);i++) printf("%c",num1[i]);
-    printf("\n");
-    for(unsigned long long i=0;i<strlen(num2);i++) printf("%c",num2[i]);
-    printf("\n\n........2^32...........\n");
+    //printf("...........Binary........\n");
+    //for(unsigned long long i=0;i<strlen(num1);i++) printf("%c",num1[i]);
+    //printf("\n");
+    //for(unsigned long long i=0;i<strlen(num2);i++) printf("%c",num2[i]);
+    //printf("\n\n........2^32...........\n");
     first_number=filling_structure(first_number,num1,0,false,false);
-    Print_Link(first_number);
-    printf("\n");
+    //Print_Link(first_number);
+    //printf("\n");
     LINK* second_number;
     second_number=filling_structure(second_number,num2,0,false,false);
-    Print_Link(second_number);
-    printf("\n");
+    //Print_Link(second_number);
+    //printf("\n");
 
     LINK* res;
+    double time_spent=0.0;
+    clock_t begin = clock ();
     res=alghorithm_multyplication(first_number,second_number);
+    clock_t end = clock();
+    time_spent += (double)(end-begin)/CLOCKS_PER_SEC;
+    Printf_in_sixteenfour_system(res);
+    printf("\n");
     char* check;
     check=Return_in_decimal_system(res);
     for (int i=0;i<strlen(check);i++) printf("%c",check[i]);
+    printf("\n");
+    printf("\ntime = %f\n",time_spent);
     //Print_Link(res);
     /*
     printf("\n........2^64...........\n");
