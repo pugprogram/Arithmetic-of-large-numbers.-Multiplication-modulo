@@ -28,7 +28,7 @@ typedef struct link{
 
 
 
-
+//Вспомогательная функция
 char* Copy_and_add(char* chastnoe,char dopper){
     char* dop_str=malloc(sizeof(char)*(strlen(chastnoe)+2));
     for (unsigned long long i=0;i<strlen(chastnoe);i++){
@@ -50,7 +50,9 @@ char* Copy_and_add(char* chastnoe,char dopper){
 
 
 
-
+//Функция чтения из файла
+//Для запуска необходимо создать char* chastnoe, а также выделить ему память
+//также должен быть запущен файл, из которого берем тестовые данные 
 char* read_num_from_file_2(char* chastnoe,FILE* fp){
     char* res=malloc(2);
     res[1]='\0';
@@ -113,6 +115,9 @@ char* read_num_from_file_2(char* chastnoe,FILE* fp){
     return res;
 }
 
+//Функция сопоставления строки, полученной в предыдущей функции, и стуктуры LINK
+//Параметры - p=NULL, char* binary - строка, полученная в предыдущей функции
+//i=0,flag_chetn=flag_enter_0=0
 LINK* filling_structure(LINK* p,char* binary,int i,bool flag_chetn,bool flag_enter_0){
     unsigned long long multiplier=1;
     p=(LINK*)malloc(sizeof(LINK));
@@ -135,7 +140,7 @@ LINK* filling_structure(LINK* p,char* binary,int i,bool flag_chetn,bool flag_ent
     return p;
 }
 
-
+//Функция простой печати LINK(печает в системе счисления 2^32)
 void Print_Link(LINK* p){
     if (p!=NULL){
         printf("%ld\n",p->pair.n);
@@ -143,7 +148,7 @@ void Print_Link(LINK* p){
     }
 }
 
-
+//Функция перемножения больших чисел, представленных в виде строк (вспомогательная функция)
 char* Multyplication_large_numbers(char* num1, char* num2){
     char* res;
     unsigned long len1 = strlen(num1);
@@ -193,7 +198,7 @@ char* Multyplication_large_numbers(char* num1, char* num2){
     return res;
 }
 
-
+//Функция сложения больших чисел, представленных в виде строк (вспомогательная функция)
 char* Add_large_numbers(char* num1, char* num2){
     unsigned long len1=strlen(num1);
     unsigned long len2=strlen(num2);
@@ -266,7 +271,8 @@ char* Add_large_numbers(char* num1, char* num2){
 }
 
 
-
+//Функция, которая возвращает строку - число, которое хранится в нашей структуре в десятичной системе
+//счисления
 char* Return_in_decimal_system(LINK* p){
     char* mnog=malloc(2);
     mnog[0]='1';
@@ -288,6 +294,7 @@ char* Return_in_decimal_system(LINK* p){
     return res;
 }
 
+//Функция печати числа в системе счисления 2^64
 void Printf_in_sixteenfour_system(LINK* p){
     if ((p!=NULL)&&(p->foll!=NULL)){
         unsigned long long senior_coeff=p->foll->pair.n;
@@ -305,7 +312,7 @@ void Printf_in_sixteenfour_system(LINK* p){
     }
 }
 
-
+//Вспомогательная функция
 unsigned long long Size_Link(LINK* p){
     unsigned long long size=0;
     while (p!=NULL) {
@@ -319,7 +326,7 @@ unsigned long long Size_Link(LINK* p){
 
 
 
-
+//Реализация алгоритма умножения в системе счисления 2^32
 LINK* alghorithm_multyplication(LINK* first_num,LINK* second_num){
     LINK* res=NULL;
     res=(LINK*)malloc(sizeof(LINK));
