@@ -4,9 +4,10 @@
 #include <time.h>
 #include <math.h>
 #include <stdbool.h>
-#define DEGREE 8
+#define DEGREE 5
 #define SIZE_OF_EXAMPLE 4
-
+//DEGREE - степень, отвечающая за размер генерируемых примеров (размер = 2^DEGREE)
+//SIZE_OF_EXAMPLE-количество генерируемых примеров
 
 unsigned long long find_quantity_of_num_for_generation(){
     unsigned long long quanity_numbers=1;
@@ -26,7 +27,7 @@ int generation_number(){
         for (unsigned long long i=0;i<quantity_numbers;i++) fprintf(fp,"%d",rand()%10);
         fprintf(fp,"\n");
     }
-    
+    fclose(fp);
     return 0;
 }
 
