@@ -118,11 +118,11 @@ char* read_num_from_file_2(char* chastnoe,FILE* fp){
 //Функция сопоставления строки, полученной в предыдущей функции, и стуктуры LINK
 //Параметры - p=NULL, char* binary - строка, полученная в предыдущей функции
 //i=0,flag_chetn=flag_enter_0=0
-LINK* filling_structure(LINK* p,char* binary,int i,bool flag_chetn,bool flag_enter_0){
+LINK* filling_structure(LINK* p,LINK* prev,char* binary,int i,bool flag_chetn,bool flag_enter_0){
     unsigned long long multiplier=1;
     p=(LINK*)malloc(sizeof(LINK));
     p->foll=NULL;
-    p->prec=NULL;
+    p->prec=prev;
     p->ptype='d';
     if (flag_enter_0){
         p->pair.n=0;
@@ -135,8 +135,8 @@ LINK* filling_structure(LINK* p,char* binary,int i,bool flag_chetn,bool flag_ent
         multiplier=multiplier<<1;
     }
     p->pair.n=num;
-    if (i<(strlen(binary)-1)) p->foll=filling_structure(p->foll,binary,i,!flag_chetn,false);
-    else if (!flag_chetn) p->foll=filling_structure(p->foll,binary,i,!flag_chetn,true);
+    if (i<(strlen(binary)-1)) p->foll=filling_structure(p->foll,p,binary,i,!flag_chetn,false);
+    else if (!flag_chetn) p->foll=filling_structure(p->foll,p,binary,i,!flag_chetn,true);
     return p;
 }
 
@@ -336,6 +336,7 @@ LINK* alghorithm_multyplication(LINK* first_num,LINK* second_num){
     unsigned long long size_first_num=Size_Link(first_num);
     unsigned long long size_second_num=Size_Link(second_num);
     if ((size_first_num>size_second_num)||(size_first_num==size_second_num)){
+        LINK* dop_for_dop_res2=NULL;
         LINK* dop_for_res=res;
         LINK* dop_for_res2=res;
         LINK* dop_for_first_num=first_num;
@@ -346,22 +347,31 @@ LINK* alghorithm_multyplication(LINK* first_num,LINK* second_num){
             if (dop_for_res2==NULL){
                 dop_for_res2=(LINK*)malloc(sizeof(LINK));
                 dop_for_res2->foll=NULL;
-                dop_for_res2->prec=NULL;
+                dop_for_res2->prec=dop_for_dop_res2;
                 dop_for_res2->pair.n=0;
             }
             mnog=dop_for_res2->pair.n+mnog;
-            unsigned long mainpart=mnog>>32;
-            unsigned long ost=mnog-(mainpart<<32);
+            unsigned long mainpart=0;
+            unsigned long ost=0;
+            if (mnog){
+                mainpart=mnog>>32;
+                ost=mnog-(mainpart<<32);
+            }
+            else{
+                mainpart=0;
+                ost=0;
+            }
             dop_for_res2->pair.n=ost;
-            if (mainpart){
+            //if (mainpart){
                 if (dop_for_res2->foll==NULL){
                     dop_for_res2->foll=(LINK*)malloc(sizeof(LINK));
                     dop_for_res2->foll->pair.n=0;
                     dop_for_res2->foll->foll=NULL;
-                    dop_for_res2->foll->prec=NULL;
+                    dop_for_res2->foll->prec=dop_for_res2;
                 }
                 dop_for_res2->foll->pair.n+=mainpart;
-            }
+            //}
+            dop_for_dop_res2=dop_for_res2;
             dop_for_res2=dop_for_res2->foll;
             dop_for_first_num=dop_for_first_num->foll;
         }
@@ -372,6 +382,7 @@ LINK* alghorithm_multyplication(LINK* first_num,LINK* second_num){
         }
     }
     else{
+        LINK* dop_for_dop_res2=NULL;
         LINK* dop_for_res=res;
         LINK* dop_for_res2=res;
         LINK* dop_for_second_num=second_num;
@@ -382,22 +393,23 @@ LINK* alghorithm_multyplication(LINK* first_num,LINK* second_num){
             if (dop_for_res2==NULL){
                 dop_for_res2=(LINK*)malloc(sizeof(LINK));
                 dop_for_res2->foll=NULL;
-                dop_for_res2->prec=NULL;
+                dop_for_res2->prec=dop_for_dop_res2;
                 dop_for_res2->pair.n=0;
             }
             mnog=dop_for_res2->pair.n+mnog;
             unsigned long mainpart=mnog>>32;
             unsigned long ost=mnog-(mainpart<<32);
             dop_for_res2->pair.n=ost;
-            if (mainpart){
+            //if (mainpart){
                 if (dop_for_res2->foll==NULL){
                     dop_for_res2->foll=(LINK*)malloc(sizeof(LINK));
                     dop_for_res2->foll->pair.n=0;
                     dop_for_res2->foll->foll=NULL;
-                    dop_for_res2->foll->prec=NULL;
+                    dop_for_res2->foll->prec=dop_for_res2;
                 }
                 dop_for_res2->foll->pair.n+=mainpart;
-            }
+            //}
+            dop_for_dop_res2=dop_for_res2;
             dop_for_res2=dop_for_res2->foll;
             dop_for_second_num=dop_for_second_num->foll;
         }
@@ -410,7 +422,67 @@ LINK* alghorithm_multyplication(LINK* first_num,LINK* second_num){
     return res;
 }
 
+LINK* reverse(LINK* p){
+    while (p->foll->foll!=NULL) p=p->foll;
+    return p;
+}
 
+
+int Compare(LINK* p, LINK* q){
+    int size_p=Size_Link(p);
+    int size_q=Size_Link(q);
+    if (size_p>size_q) return 1;
+    if (size_p<size_q) return -1;
+    LINK* reverse_p=reverse(p);
+    LINK* reverse_q=reverse(q);
+    while (reverse_p!=NULL){
+        if (reverse_p->pair.n>reverse_q->pair.n) return 1;
+        if (reverse_p->pair.n<reverse_q->pair.n) return -1;
+        reverse_p=reverse_p->prec;
+        reverse_q=reverse_q->prec;
+    }
+    return 0;
+}
+
+
+//Вспомогательная! нужна для алгоритма деления в 2^32 системе счисления
+//Функция обрабатывает только случаи, когда p>q 
+LINK* SUB_LINK(LINK*p, LINK*q){
+    if (Compare(p,q)==-1) return NULL;
+    bool flag =false;
+    LINK* res=(LINK*)malloc(sizeof(LINK));
+    res->pair.n=0;
+    res->foll=NULL;
+    res->prec=NULL;
+    LINK* dop_for_res=res;
+    while (q!=NULL){
+        if (p->pair.n>=q->pair.n) {
+            dop_for_res->pair.n=p->pair.n-q->pair.n;
+            if (flag){
+                dop_for_res->pair.n-=1;
+                flag=false;
+            }
+        }
+        else{
+            dop_for_res->pair.n=1<<32+p->pair.n-q->pair.n;
+            if (flag) dop_for_res->pair.n-=1;
+        }
+        p=p->foll;
+        if (q->foll!=NULL){
+            dop_for_res->foll=(LINK*)malloc(sizeof(LINK));
+            dop_for_res->foll->pair.n=0;
+            dop_for_res->foll->foll=NULL;
+            dop_for_res->foll->prec=dop_for_res;
+        }
+        q=q->foll;
+        dop_for_res=dop_for_res->foll;
+    }
+    return res;
+}
+
+//return 1 if p>q
+//return 0 if p=q
+//return -1 p<q
 
 
 int main(){
@@ -432,17 +504,12 @@ int main(){
     char* num2;
     num2=read_num_from_file_2(chastnoe,fp);
     fclose(fp);
-    //printf("...........Binary........\n");
-    //for(unsigned long long i=0;i<strlen(num1);i++) printf("%c",num1[i]);
-    //printf("\n");
-    //for(unsigned long long i=0;i<strlen(num2);i++) printf("%c",num2[i]);
-    //printf("\n\n........2^32...........\n");
-    first_number=filling_structure(first_number,num1,0,false,false);
-    //Print_Link(first_number);
-    //printf("\n");
+    first_number=filling_structure(first_number,NULL,num1,0,false,false);
+    Print_Link(first_number);
+    printf("\n");
     LINK* second_number;
-    second_number=filling_structure(second_number,num2,0,false,false);
-    //Print_Link(second_number);
+    second_number=filling_structure(second_number,NULL,num2,0,false,false);
+    Print_Link(second_number);
     //printf("\n");
 
     LINK* res;
@@ -458,12 +525,22 @@ int main(){
     for (int i=0;i<strlen(check);i++) printf("%c",check[i]);
     printf("\n");
     printf("\ntime = %f\n",time_spent);
+    //reverse(res);
+    printf("\n");
     //Print_Link(res);
+    LINK* check_sub=SUB_LINK(first_number,second_number);
+    if (check_sub!=NULL){
+        check=Return_in_decimal_system(check_sub);
+        for (int i=0;i<strlen(check);i++) printf("%c",check[i]);
+        printf("\n");
+    }
+    //printf("%d",Compare(first_number,second_number));
     /*
     printf("\n........2^64...........\n");
     Printf_in_sixteenfour_system(first_number);
     printf("\n");
     Printf_in_sixteenfour_system(second_number);
     */
+    //reverse(res);
     return 0;
 }
