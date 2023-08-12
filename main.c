@@ -129,14 +129,14 @@ LINK* filling_structure(LINK* p,LINK* prev,char* binary,int i,bool flag_chetn,bo
         p->pair.n=0;
         return p;
     }
-    unsigned long num=0;
+    unsigned long long num=0;
     int dop_i=i;
     for (i;(i<dop_i+32)&&(i<strlen(binary));i++){
         num+=(binary[i]-'0')*multiplier;
         multiplier=multiplier<<1;
     }
     p->pair.n=num;
-    if (i<(strlen(binary)-1)) p->foll=filling_structure(p->foll,p,binary,i,!flag_chetn,false);
+    if (i<(strlen(binary))) p->foll=filling_structure(p->foll,p,binary,i,!flag_chetn,false);
     else if (!flag_chetn) p->foll=filling_structure(p->foll,p,binary,i,!flag_chetn,true);
     return p;
 }
@@ -445,7 +445,6 @@ LINK* alghorithm_multyplication(LINK* first_num,LINK* second_num){
             }*/
             //else {
                 mnog=second_num->pair.n*dop_for_first_num->pair.n;
-                printf("mnog=%lld\n",mnog);
                 mnog=dop_for_res2->pair.n+mnog;
                 if (mnog){
                     mainpart=mnog>>32;
@@ -633,25 +632,11 @@ int main(){
     res=alghorithm_multyplication(first_number,second_number);
     clock_t end = clock();
     time_spent += (double)(end-begin)/CLOCKS_PER_SEC;
-    //Printf_in_sixteenfour_system(res);
-    //printf("\n");
     char* check;
     check=Return_in_decimal_system(res);
     for (int i=0;i<strlen(check);i++) printf("%c",check[i]);
     printf("\n");
     printf("\ntime = %f\n",time_spent);
-    //reverse(res);
-    //printf("\n");
-    //Print_Link(res);
-    //LINK* check_div;
-    //check_div=Div_in_32_system(first_number,second_number);
-    //printf("%d",Compare(first_number,second_number));
-    /*
-    printf("\n........2^64...........\n");
-    Printf_in_sixteenfour_system(first_number);
-    printf("\n");
-    Printf_in_sixteenfour_system(second_number);
-    */
-    //reverse(res);
+
     return 0;
 }
