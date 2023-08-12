@@ -5,6 +5,7 @@
 #include <math.h>
 #include <stdbool.h>
 #include <time.h>
+#define INT_MAX 18446744073709551615
 
 typedef struct link{
 	char ptype; /* type of the link */
@@ -322,8 +323,81 @@ unsigned long long Size_Link(LINK* p){
     return size;
 }
 
+//1 str1>=str2
+//else 0
+int Compare_str(char* str1, char* str2){
+    if (strlen(str1)>strlen(str2)) return 1;
+    if (strlen(str1)<strlen(str2)) return 0;
+    else{
+        for (unsigned long i=0;i<strlen(str1);i++){
+            if (str1[i]>str2[i]) return 1;
+            if (str1[i]<str2[i]) return 0;
+        }   
+    }
+    return 1;
+}
 
+typedef struct Ost_And_Res{
+    unsigned long res;
+    unsigned long ost;
+}RES;
 
+RES* division_in_ten_system(char* mnog){
+    RES* p =(RES*) malloc(sizeof(RES));
+    char* res=malloc(sizeof(char));
+    res[0]='\0';
+    char* chastnoe=malloc(sizeof(char));
+    chastnoe[0]='\0';
+    int i=0;
+    for (i=0;i<strlen(mnog);i++){
+        chastnoe=Copy_and_add(chastnoe,mnog[i]);
+        if (Compare_str(chastnoe,"4294967296")==1){
+            unsigned long long mnog_num=strtoull(chastnoe,NULL,10);
+            mnog_num=mnog_num/4294967296;
+            res=Copy_and_add(res,mnog_num+'0');
+            unsigned long long chastnoe_num=strtoull(chastnoe,NULL,10);
+            chastnoe_num-=mnog_num*4294967296;
+            char dop_chastnoe[40];
+            snprintf(dop_chastnoe,sizeof dop_chastnoe, "%lld",chastnoe_num);
+            free(chastnoe);
+            chastnoe=malloc(sizeof(char)*(strlen(dop_chastnoe)+1));
+            chastnoe[strlen(dop_chastnoe)]='\0';
+            for(int j=0;j<strlen(dop_chastnoe);j++){
+                chastnoe[j]=dop_chastnoe[j];
+            }
+            break;
+        }
+    }
+    
+    if ((i+1)==strlen(mnog)) {
+        p->ost=strtoul(chastnoe,NULL,10);
+        p->res=strtoul(res,NULL,10);
+        return p;
+    }
+    for (i=i+1;i<strlen(mnog);i++){
+        chastnoe=Copy_and_add(chastnoe,mnog[i]);
+        if (!Compare_str(chastnoe,"4294967296")){
+            res=Copy_and_add(res,'0');
+            continue;
+        }
+        unsigned long long mnog_num=strtoull(chastnoe,NULL,10);
+        mnog_num=mnog_num/4294967296;
+        res=Copy_and_add(res,mnog_num+'0');
+        unsigned long long chastnoe_num=strtoull(chastnoe,NULL,10);
+        chastnoe_num-=mnog_num*4294967296;
+        char dop_chastnoe[40];
+        snprintf(dop_chastnoe,sizeof dop_chastnoe, "%lld",chastnoe_num);
+        free(chastnoe);
+        chastnoe=malloc(sizeof(char)*(strlen(dop_chastnoe)+1));
+        chastnoe[strlen(dop_chastnoe)]='\0';
+        for(int j=0;j<strlen(dop_chastnoe);j++){
+            chastnoe[j]=dop_chastnoe[j];
+        }
+    }
+    p->ost=strtoul(chastnoe,NULL,10);
+    p->res=strtoul(res,NULL,10);
+    return p;
+}
 
 
 //Реализация алгоритма умножения в системе счисления 2^32
@@ -343,24 +417,45 @@ LINK* alghorithm_multyplication(LINK* first_num,LINK* second_num){
         while (second_num!=NULL){
         while (dop_for_first_num!=NULL){
             unsigned long long mnog=0;
-            mnog=second_num->pair.n*dop_for_first_num->pair.n;
+            unsigned long mainpart=0;
+            unsigned long ost=0;
+            //Проверка на переполнение
             if (dop_for_res2==NULL){
                 dop_for_res2=(LINK*)malloc(sizeof(LINK));
                 dop_for_res2->foll=NULL;
                 dop_for_res2->prec=dop_for_dop_res2;
                 dop_for_res2->pair.n=0;
             }
-            mnog=dop_for_res2->pair.n+mnog;
-            unsigned long mainpart=0;
-            unsigned long ost=0;
-            if (mnog){
-                mainpart=mnog>>32;
-                ost=mnog-(mainpart<<32);
-            }
-            else{
-                mainpart=0;
-                ost=0;
-            }
+            //unsigned long long per=184467440737095599;
+            /*if ((second_num->pair.n*dop_for_first_num->pair.n)>per){
+                char* res;
+                char str1[30];
+                snprintf(str1,sizeof str1,"%ld",second_num->pair.n);
+                char str2[30];
+                snprintf(str2,sizeof str2,"%ld",dop_for_first_num->pair.n);
+                res=Multyplication_large_numbers(str1,str2);
+                char str3[30];
+                snprintf(str3,sizeof str3,"%ld",dop_for_res2->pair.n);
+                res=Add_large_numbers(res,str3);
+                RES* p;
+                p=division_in_ten_system(res);
+                mainpart=p->res;
+                printf("mainpart = %ld\n",mainpart);
+                ost=p->ost;
+            }*/
+            //else {
+                mnog=second_num->pair.n*dop_for_first_num->pair.n;
+                printf("mnog=%lld\n",mnog);
+                mnog=dop_for_res2->pair.n+mnog;
+                if (mnog){
+                    mainpart=mnog>>32;
+                    ost=mnog-(mainpart<<32);
+                }
+                else{
+                    mainpart=0;
+                    ost=0;
+                }
+            //}
             dop_for_res2->pair.n=ost;
             //if (mainpart){
                 if (dop_for_res2->foll==NULL){
@@ -424,10 +519,13 @@ LINK* alghorithm_multyplication(LINK* first_num,LINK* second_num){
 
 LINK* reverse(LINK* p){
     while (p->foll->foll!=NULL) p=p->foll;
-    return p;
+    return p->foll;
 }
 
 
+//return 1 if p>q
+//return 0 if p=q
+//return -1 p<q
 int Compare(LINK* p, LINK* q){
     int size_p=Size_Link(p);
     int size_q=Size_Link(q);
@@ -464,7 +562,7 @@ LINK* SUB_LINK(LINK*p, LINK*q){
             }
         }
         else{
-            dop_for_res->pair.n=1<<32+p->pair.n-q->pair.n;
+            dop_for_res->pair.n=4294967296+p->pair.n-q->pair.n;
             if (flag) dop_for_res->pair.n-=1;
         }
         p=p->foll;
@@ -480,9 +578,27 @@ LINK* SUB_LINK(LINK*p, LINK*q){
     return res;
 }
 
-//return 1 if p>q
-//return 0 if p=q
-//return -1 p<q
+LINK* Div_in_32_system(LINK*a, LINK* b){
+    if ((a==NULL)||(b==NULL)) return NULL;
+    LINK* an=reverse(a);
+    LINK* bn=reverse(b);
+    LINK* normal_a;
+    LINK* normal_b;
+    LINK* vector_for_normalization=NULL;
+    vector_for_normalization=(LINK*)malloc(sizeof(LINK));
+    vector_for_normalization->prec=NULL;
+    unsigned long long base=4294967296;
+    vector_for_normalization->pair.n=(unsigned long) (base/(bn->pair.n+1));
+    vector_for_normalization->foll=(LINK*)malloc(sizeof(LINK));
+    vector_for_normalization->foll->foll=NULL;
+    vector_for_normalization->foll->prec=vector_for_normalization;
+    vector_for_normalization->foll->pair.n=0;
+    normal_a = alghorithm_multyplication(a,vector_for_normalization);
+    normal_b=alghorithm_multyplication(b,vector_for_normalization);
+    printf("\n");
+    Print_Link(normal_b);
+    printf("\n");
+}
 
 
 int main(){
@@ -510,30 +626,25 @@ int main(){
     LINK* second_number;
     second_number=filling_structure(second_number,NULL,num2,0,false,false);
     Print_Link(second_number);
-    //printf("\n");
-
+    printf("\n");
     LINK* res;
     double time_spent=0.0;
     clock_t begin = clock ();
     res=alghorithm_multyplication(first_number,second_number);
     clock_t end = clock();
     time_spent += (double)(end-begin)/CLOCKS_PER_SEC;
-    Printf_in_sixteenfour_system(res);
-    printf("\n");
+    //Printf_in_sixteenfour_system(res);
+    //printf("\n");
     char* check;
     check=Return_in_decimal_system(res);
     for (int i=0;i<strlen(check);i++) printf("%c",check[i]);
     printf("\n");
     printf("\ntime = %f\n",time_spent);
     //reverse(res);
-    printf("\n");
+    //printf("\n");
     //Print_Link(res);
-    LINK* check_sub=SUB_LINK(first_number,second_number);
-    if (check_sub!=NULL){
-        check=Return_in_decimal_system(check_sub);
-        for (int i=0;i<strlen(check);i++) printf("%c",check[i]);
-        printf("\n");
-    }
+    //LINK* check_div;
+    //check_div=Div_in_32_system(first_number,second_number);
     //printf("%d",Compare(first_number,second_number));
     /*
     printf("\n........2^64...........\n");
