@@ -678,11 +678,6 @@ LINK* Div_in_32_system(LINK*a, LINK* b){
     unsigned long long base_without_1=4294967296-1;
     normal_a=alghorithm_multyplication(a,vector_for_normalization);
     normal_b=alghorithm_multyplication(b,vector_for_normalization);
-    printf("\nA:\n");
-    Print_Link(normal_a);
-    printf("\nB:\n");
-    Print_Link(normal_b);
-    printf("\n");
     //Результат
     LINK* res;
     res=(LINK*)malloc(sizeof(LINK));
@@ -725,9 +720,6 @@ LINK* Div_in_32_system(LINK*a, LINK* b){
         q->prec->prec=NULL;
         q=q->prec;
     }
-    printf("Q\n");
-    Print_Link(q);
-    printf("\n");
     if (first_num>=normal_b_reverse->pair.n){
         res->pair.n=1;
         /*while (true){
@@ -756,7 +748,7 @@ LINK* Div_in_32_system(LINK*a, LINK* b){
         delta->prec=NULL;
         unsigned long long num=(first_num<<32)/normal_b_reverse->pair.n;
         unsigned long long num2=second_num/normal_b_reverse->pair.n;
-        num=num+num2+2;
+        num=num+num2+5;
         if (num<=base_without_1) {
             delta->pair.n=num;
         }
@@ -764,27 +756,15 @@ LINK* Div_in_32_system(LINK*a, LINK* b){
         while (true){
             LINK* mnog;
             mnog=alghorithm_multyplication(delta,normal_b);
-            printf("Compare=%d\n",Compare(mnog,q));
             if (Compare(mnog,q)==1) delta->pair.n-=1;
             else break;
         }
         res->pair.n=delta->pair.n;
         LINK* mnog;
         mnog=alghorithm_multyplication(res,normal_b);
-        printf("delta=%ld\n",delta->pair.n);
-        char* check;
-        check=Return_in_decimal_system(mnog);
-        printf("MNOG=");
-        for (int i=0;i<strlen(check);i++) printf("%c",check[i]);
-        printf("\n");
-        Print_Link(mnog);
-        printf("\n");
         q=SUB_LINK(q,mnog);
         free(delta);
     }
-    printf("Q\n");
-    Print_Link(q);
-    printf("\n");
     if (normal_a_reverse->prec==NULL) return res;
     while (normal_a_reverse!=NULL){
         normal_a_reverse=normal_a_reverse->prec;
@@ -794,9 +774,6 @@ LINK* Div_in_32_system(LINK*a, LINK* b){
         q->prec->pair.n=normal_a_reverse->pair.n;
         q->prec->prec=NULL;
         q=q->prec;
-        printf("Q\n");
-        Print_Link(q);
-        printf("\n");
         LINK* reverse_q=reverse(q);
         first_num=reverse_q->pair.n;
         if (reverse_q->prec==NULL) second_num=0;
@@ -852,17 +829,22 @@ LINK* Div_in_32_system(LINK*a, LINK* b){
             res->prec->prec=NULL;
             res->prec->pair.n=delta->pair.n;
             res=res->prec;
-            printf("R\n");
-            Print_Link(res);
-            printf("\n");
             LINK* mnog;
             mnog=alghorithm_multyplication(delta,normal_b);
-            
             q=SUB_LINK(q,mnog);
         }
     }
     return res;
     
+}
+
+//Я БОЛЬШЕ НЕ МОГУ(((((((((((((
+LINK* FIND_MOD(LINK*num,LINK* mod){
+    LINK*q;
+    q=Div_in_32_system(num,mod);
+    q=alghorithm_multyplication(q,mod);
+    q=SUB_LINK(num,q);
+    return q;
 }
 
 
@@ -886,14 +868,9 @@ int main(){
     num2=read_num_from_file_2(chastnoe,fp);
     fclose(fp);
     first_number=filling_structure(first_number,NULL,num1,0,false,false);
-    Print_Link(first_number);
-    printf("\n");
     LINK* second_number;
     second_number=filling_structure(second_number,NULL,num2,0,false,false);
-    Print_Link(second_number);
-    printf("\n");
     LINK* res;
-    /*
     double time_spent=0.0;
     clock_t begin = clock ();
     res=alghorithm_multyplication(first_number,second_number);
@@ -901,27 +878,13 @@ int main(){
     time_spent += (double)(end-begin)/CLOCKS_PER_SEC;
     char* check;
     check=Return_in_decimal_system(res);
+    printf("Multyplication result = ");
     for (int i=0;i<strlen(check);i++) printf("%c",check[i]);
     printf("\n");
     printf("\ntime = %f\n",time_spent);
-    */
-    res=Div_in_32_system(first_number,second_number);
-    if (!res){
-        printf("NULL");
-        return 0;
-    }
+    res=FIND_MOD(first_number,second_number);
     printf("\n");
-    Print_Link(res);
-    printf("\n");
-    char* check;
     check=Return_in_decimal_system(res);
-    printf("Result\n");
-    for (int i=0;i<strlen(check);i++) printf("%c",check[i]);
-    printf("\n");
-    LINK* mnog;
-    mnog=alghorithm_multyplication(res,second_number);
-    mnog=SUB_LINK(first_number,mnog);
-    check=Return_in_decimal_system(mnog);
     printf("Result\n");
     for (int i=0;i<strlen(check);i++) printf("%c",check[i]);
     printf("\n");
