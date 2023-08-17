@@ -137,7 +137,7 @@ LINK* filling_structure(LINK* p,LINK* prev,char* binary,int i,bool flag_chetn,bo
     }
     p->pair.n=num;
     if (i<(strlen(binary))) p->foll=filling_structure(p->foll,p,binary,i,!flag_chetn,false);
-    else if (!flag_chetn) p->foll=filling_structure(p->foll,p,binary,i,!flag_chetn,true);
+    //else if (!flag_chetn) p->foll=filling_structure(p->foll,p,binary,i,!flag_chetn,true);
     return p;
 }
 
@@ -353,10 +353,10 @@ RES* division_in_ten_system(char* mnog){
         chastnoe=Copy_and_add(chastnoe,mnog[i]);
         if (Compare_str(chastnoe,"4294967296")==1){
             unsigned long long mnog_num=strtoull(chastnoe,NULL,10);
-            mnog_num=mnog_num/4294967296;
+            mnog_num=mnog_num>>32;
             res=Copy_and_add(res,mnog_num+'0');
             unsigned long long chastnoe_num=strtoull(chastnoe,NULL,10);
-            chastnoe_num-=mnog_num*4294967296;
+            chastnoe_num-=mnog_num<<32;
             char dop_chastnoe[40];
             snprintf(dop_chastnoe,sizeof dop_chastnoe, "%lld",chastnoe_num);
             free(chastnoe);
@@ -381,10 +381,10 @@ RES* division_in_ten_system(char* mnog){
             continue;
         }
         unsigned long long mnog_num=strtoull(chastnoe,NULL,10);
-        mnog_num=mnog_num/4294967296;
+        mnog_num=mnog_num>>32;
         res=Copy_and_add(res,mnog_num+'0');
         unsigned long long chastnoe_num=strtoull(chastnoe,NULL,10);
-        chastnoe_num-=mnog_num*4294967296;
+        chastnoe_num-=mnog_num<<32;
         char dop_chastnoe[40];
         snprintf(dop_chastnoe,sizeof dop_chastnoe, "%lld",chastnoe_num);
         free(chastnoe);
@@ -399,6 +399,25 @@ RES* division_in_ten_system(char* mnog){
     return p;
 }
 
+LINK* reverse(LINK* p){
+    if (p->foll==NULL) return p;
+    while (p->foll->foll!=NULL) p=p->foll;
+    return p->foll;
+}
+
+LINK* DELETE_ZERROW(LINK*p){
+    LINK* p_r=reverse(p);
+    while (true){
+        if (p_r->pair.n==0) {
+            LINK* pred=p_r->prec;
+            p_r->prec->foll=NULL;
+            free(p_r);
+            p_r=pred;
+        }
+        else break;
+    }
+    return p;
+}
 
 //Реализация алгоритма умножения в системе счисления 2^32
 LINK* alghorithm_multyplication(LINK* first_num,LINK* second_num){
@@ -513,13 +532,13 @@ LINK* alghorithm_multyplication(LINK* first_num,LINK* second_num){
         dop_for_res2=dop_for_res;
         }    
     }
+    res=DELETE_ZERROW(res);
     return res;
 }
 
-LINK* reverse(LINK* p){
-    while (p->foll->foll!=NULL) p=p->foll;
-    return p->foll;
-}
+
+
+
 
 
 //return 1 if p>q
@@ -528,10 +547,12 @@ LINK* reverse(LINK* p){
 int Compare(LINK* p, LINK* q){
     int size_p=Size_Link(p);
     int size_q=Size_Link(q);
-    if (size_p>size_q) return 1;
-    if (size_p<size_q) return -1;
     LINK* reverse_p=reverse(p);
     LINK* reverse_q=reverse(q);
+    if (size_p>size_q){
+      return 1;  
+    } 
+    if (size_q>size_p) return -1;
     while (reverse_p!=NULL){
         if (reverse_p->pair.n>reverse_q->pair.n) return 1;
         if (reverse_p->pair.n<reverse_q->pair.n) return -1;
@@ -545,7 +566,16 @@ int Compare(LINK* p, LINK* q){
 //Вспомогательная! нужна для алгоритма деления в 2^32 системе счисления
 //Функция обрабатывает только случаи, когда p>q 
 LINK* SUB_LINK(LINK*p, LINK*q){
-    if (Compare(p,q)==-1) return NULL;
+    if (Compare(p,q)==-1){
+        return NULL;
+    } 
+    if (Compare(p,q)==0){
+        LINK* res=(LINK*)malloc(sizeof(LINK));
+        res->pair.n=0;
+        res->foll=NULL;
+        res->prec=NULL;
+        return res;
+    }
     bool flag =false;
     LINK* res=(LINK*)malloc(sizeof(LINK));
     res->pair.n=0;
@@ -562,7 +592,10 @@ LINK* SUB_LINK(LINK*p, LINK*q){
         }
         else{
             dop_for_res->pair.n=4294967296+p->pair.n-q->pair.n;
-            if (flag) dop_for_res->pair.n-=1;
+            if (flag) {
+                dop_for_res->pair.n-=1;
+            }
+            flag=true;
         }
         p=p->foll;
         if (q->foll!=NULL){
@@ -574,12 +607,65 @@ LINK* SUB_LINK(LINK*p, LINK*q){
         q=q->foll;
         dop_for_res=dop_for_res->foll;
     }
+    res=DELETE_ZERROW(res);
     return res;
 }
 
+unsigned long long Size_Link_For_Not_reverse(LINK* p){
+    unsigned long long size=0;
+    while (p!=NULL) {
+        size+=1;
+        p=p->prec;
+    }
+    return size;
+}
+
+//return 1 if p>q
+//return 0 if p=q
+//return -1 p<q
+int Compare_For_Not_Reverse(LINK* p, LINK* q){
+    int size_p=Size_Link_For_Not_reverse(p);
+    int size_q=Size_Link_For_Not_reverse(q);
+    if ((size_p>size_q)&&(size_p-size_q!=1)&&(p->pair.n!=0)) return 1;
+    if ((size_q>size_p)&&(size_q-size_p!=1)&&(q->pair.n!=0)) return -1;
+    if (size_p>size_q) p=p->prec;
+    else if (size_q>size_p) q=q->prec;
+    while (p!=NULL){
+        if (p->pair.n>q->pair.n) return 1;
+        if (p->pair.n<q->pair.n) return -1;
+        p=p->prec;
+        q=q->prec;
+    }
+    return 0;
+}
+
+
+
+void Print_Link_reverse(LINK* p){
+    if (p!=NULL){
+        printf("%ld\n",p->pair.n);
+        Print_Link_reverse(p->prec);
+    }
+}
+
+
+
 LINK* Div_in_32_system(LINK*a, LINK* b){
+    if ((Size_Link(a)==Size_Link(b)&&(Size_Link(a)==1))){
+        if (!b->pair.n){
+            printf("Деление на 0 запрещено\n");
+            return NULL;
+        }
+        LINK* res;
+        res=(LINK*)malloc(sizeof(LINK));
+        res->prec=NULL;
+        res->foll=NULL;
+        res->pair.n=a->pair.n/b->pair.n;
+        return res;
+    }
+    LINK* p;
+    p=(LINK*) malloc(sizeof(LINK));
     if ((a==NULL)||(b==NULL)) return NULL;
-    LINK* an=reverse(a);
     LINK* bn=reverse(b);
     LINK* normal_a;
     LINK* normal_b;
@@ -588,15 +674,195 @@ LINK* Div_in_32_system(LINK*a, LINK* b){
     vector_for_normalization->prec=NULL;
     unsigned long long base=4294967296;
     vector_for_normalization->pair.n=(unsigned long) (base/(bn->pair.n+1));
-    vector_for_normalization->foll=(LINK*)malloc(sizeof(LINK));
-    vector_for_normalization->foll->foll=NULL;
-    vector_for_normalization->foll->prec=vector_for_normalization;
-    vector_for_normalization->foll->pair.n=0;
-    normal_a = alghorithm_multyplication(a,vector_for_normalization);
+    vector_for_normalization->foll=NULL;
+    unsigned long long base_without_1=4294967296-1;
+    normal_a=alghorithm_multyplication(a,vector_for_normalization);
     normal_b=alghorithm_multyplication(b,vector_for_normalization);
-    printf("\n");
+    printf("\nA:\n");
+    Print_Link(normal_a);
+    printf("\nB:\n");
     Print_Link(normal_b);
     printf("\n");
+    //Результат
+    LINK* res;
+    res=(LINK*)malloc(sizeof(LINK));
+    res->foll=NULL;
+    res->prec=NULL;
+    res->pair.n=0;
+    LINK* normal_a_reverse;
+    LINK* normal_b_reverse;
+    normal_a_reverse=reverse(normal_a);
+    normal_b_reverse=reverse(normal_b);
+    //Остаток
+    LINK* q;
+    q=(LINK*)malloc(sizeof(LINK));        
+    q->foll=NULL;
+    q->pair.n=normal_a_reverse->pair.n;
+    q->prec=NULL;
+    /*q->foll=(LINK*)malloc(sizeof(LINK));        
+    q->foll->foll=NULL;
+    q->foll->pair.n=0;
+    q->foll->prec=q;
+    */
+    unsigned long long first_num=normal_a_reverse->pair.n;
+    unsigned long long second_num=normal_a_reverse->prec->pair.n;
+    while (Compare(q,normal_b)==-1){
+        if (normal_a_reverse->prec==NULL){
+            LINK* ost;
+            ost=(LINK*)malloc(sizeof(LINK));
+            ost->foll=(LINK*)malloc(sizeof(LINK));
+            ost->foll->prec=ost;
+            ost->foll->foll=NULL;
+            ost->foll->pair.n=0;
+            ost->prec=NULL;
+            ost->pair.n=0;
+            return ost;
+        }
+        normal_a_reverse=normal_a_reverse->prec;
+        q->prec=malloc(sizeof(LINK));
+        q->prec->foll=q;
+        q->prec->pair.n=normal_a_reverse->pair.n;
+        q->prec->prec=NULL;
+        q=q->prec;
+    }
+    printf("Q\n");
+    Print_Link(q);
+    printf("\n");
+    if (first_num>=normal_b_reverse->pair.n){
+        res->pair.n=1;
+        /*while (true){
+            res->pair.n+=1;
+            printf("res=%ld\n",res->pair.n);
+            LINK* mnog;
+            mnog=alghorithm_multyplication(normal_b,res);
+            printf("MNOG\n");
+            char* check=Return_in_decimal_system(mnog);
+            for(int i=0;i<strlen(check);i++) printf("%c",check[i]);
+            printf("\n");
+            if (Compare(q,mnog)==-1){
+                res->pair.n-=1;
+                break;
+            }
+            else if (Compare(q,mnog)==0) break;
+        }*/
+        LINK* mnog;
+        mnog=alghorithm_multyplication(normal_b,res);
+        q=SUB_LINK(q,mnog);
+    }
+    else{
+        LINK* delta;
+        delta=(LINK*)malloc(sizeof(LINK));
+        delta->foll=NULL;
+        delta->prec=NULL;
+        unsigned long long num=(first_num<<32)/normal_b_reverse->pair.n;
+        unsigned long long num2=second_num/normal_b_reverse->pair.n;
+        num=num+num2+2;
+        if (num<=base_without_1) {
+            delta->pair.n=num;
+        }
+        else delta->pair.n=base_without_1;
+        while (true){
+            LINK* mnog;
+            mnog=alghorithm_multyplication(delta,normal_b);
+            printf("Compare=%d\n",Compare(mnog,q));
+            if (Compare(mnog,q)==1) delta->pair.n-=1;
+            else break;
+        }
+        res->pair.n=delta->pair.n;
+        LINK* mnog;
+        mnog=alghorithm_multyplication(res,normal_b);
+        printf("delta=%ld\n",delta->pair.n);
+        char* check;
+        check=Return_in_decimal_system(mnog);
+        printf("MNOG=");
+        for (int i=0;i<strlen(check);i++) printf("%c",check[i]);
+        printf("\n");
+        Print_Link(mnog);
+        printf("\n");
+        q=SUB_LINK(q,mnog);
+        free(delta);
+    }
+    printf("Q\n");
+    Print_Link(q);
+    printf("\n");
+    if (normal_a_reverse->prec==NULL) return res;
+    while (normal_a_reverse!=NULL){
+        normal_a_reverse=normal_a_reverse->prec;
+        if (normal_a_reverse==NULL) break;
+        q->prec=(LINK*)malloc(sizeof(LINK));
+        q->prec->foll=q;
+        q->prec->pair.n=normal_a_reverse->pair.n;
+        q->prec->prec=NULL;
+        q=q->prec;
+        printf("Q\n");
+        Print_Link(q);
+        printf("\n");
+        LINK* reverse_q=reverse(q);
+        first_num=reverse_q->pair.n;
+        if (reverse_q->prec==NULL) second_num=0;
+        else second_num=reverse_q->prec->pair.n;
+        if (Compare(q,normal_b)==-1){
+            res->prec=(LINK*)malloc(sizeof(LINK));
+            res->prec->foll=res;
+            res->prec->prec=NULL;
+            res->prec->pair.n=0;
+            res=res->prec;
+            continue;
+        }
+        if (first_num>=normal_b_reverse->pair.n){
+            res->prec=(LINK*)malloc(sizeof(LINK));
+            res->prec->foll=res;
+            res->prec->prec=NULL;
+            res->prec->pair.n=1;
+            res=res->prec;
+            LINK* for_one_num;
+            for_one_num=(LINK*)malloc(sizeof(LINK));
+            for_one_num->prec=NULL;
+            for_one_num->foll=NULL;
+            for_one_num->pair.n=1;
+            LINK* mnog;
+            mnog=alghorithm_multyplication(normal_b,for_one_num);
+            free(for_one_num);
+            q=SUB_LINK(q,mnog);
+            continue;
+        }
+        else{
+            LINK* delta;
+            delta=(LINK*)malloc(sizeof(LINK));
+            delta->foll=NULL;
+            delta->prec=NULL;
+            delta->pair.n=0;
+            unsigned long long num=(first_num<<32)/normal_b_reverse->pair.n;
+            unsigned long long num2=second_num/normal_b_reverse->pair.n;
+            num=num+num2+5;
+            if (num<=base_without_1) {
+                delta->pair.n=num;
+            }
+            else delta->pair.n=base_without_1;
+            while (true){
+                LINK* mnog;
+                mnog=alghorithm_multyplication(delta,normal_b);
+                if (Compare(mnog,q)==1){
+                    delta->pair.n-=1;
+                } 
+                else break;
+            }
+            res->prec=(LINK*)malloc(sizeof(LINK));
+            res->prec->foll=res;
+            res->prec->prec=NULL;
+            res->prec->pair.n=delta->pair.n;
+            res=res->prec;
+            printf("R\n");
+            Print_Link(res);
+            printf("\n");
+            LINK* mnog;
+            mnog=alghorithm_multyplication(delta,normal_b);
+            
+            q=SUB_LINK(q,mnog);
+        }
+    }
+    return res;
+    
 }
 
 
@@ -627,6 +893,7 @@ int main(){
     Print_Link(second_number);
     printf("\n");
     LINK* res;
+    /*
     double time_spent=0.0;
     clock_t begin = clock ();
     res=alghorithm_multyplication(first_number,second_number);
@@ -637,6 +904,26 @@ int main(){
     for (int i=0;i<strlen(check);i++) printf("%c",check[i]);
     printf("\n");
     printf("\ntime = %f\n",time_spent);
-
+    */
+    res=Div_in_32_system(first_number,second_number);
+    if (!res){
+        printf("NULL");
+        return 0;
+    }
+    printf("\n");
+    Print_Link(res);
+    printf("\n");
+    char* check;
+    check=Return_in_decimal_system(res);
+    printf("Result\n");
+    for (int i=0;i<strlen(check);i++) printf("%c",check[i]);
+    printf("\n");
+    LINK* mnog;
+    mnog=alghorithm_multyplication(res,second_number);
+    mnog=SUB_LINK(first_number,mnog);
+    check=Return_in_decimal_system(mnog);
+    printf("Result\n");
+    for (int i=0;i<strlen(check);i++) printf("%c",check[i]);
+    printf("\n");
     return 0;
 }
