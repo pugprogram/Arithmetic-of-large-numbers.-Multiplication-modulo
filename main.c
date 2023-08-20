@@ -27,7 +27,7 @@ typedef struct link{
 #define PREV(q)    ((q)->prec)
 #define TYPE(q)    ((q)->ptype)
 
-
+LINK* SUB_LINK(LINK*p, LINK*q);
 
 //Вспомогательная функция
 char* Copy_and_add(char* chastnoe,char dopper){
@@ -282,6 +282,9 @@ char* Return_in_decimal_system(LINK* p){
     char* res=malloc(2);
     res[0]='0';
     res[1]='\0';
+    if (q!=NULL){
+        if (q->ptype=='n') printf("-");
+    }
     while (q!=NULL){
         char coeff [30];
         snprintf(coeff,sizeof coeff,"%ld",q->pair.n);
@@ -425,9 +428,12 @@ LINK* alghorithm_multyplication(LINK* first_num,LINK* second_num){
     res=(LINK*)malloc(sizeof(LINK));
     res->foll=NULL;
     res->prec=NULL;
+    if (((first_num->ptype=='d')&&(second_num->ptype=='n'))||((first_num->ptype=='n')&&(second_num->ptype=='d'))) res->ptype='n';
+    else res->ptype='d';
     res->pair.n=0;
     unsigned long long size_first_num=Size_Link(first_num);
     unsigned long long size_second_num=Size_Link(second_num);
+    if (((size_first_num==1)&&(first_num->pair.n==0))||((size_second_num==1)&&(second_num->pair.n==0))) return res;
     if ((size_first_num>size_second_num)||(size_first_num==size_second_num)){
         LINK* dop_for_dop_res2=NULL;
         LINK* dop_for_res=res;
@@ -441,6 +447,7 @@ LINK* alghorithm_multyplication(LINK* first_num,LINK* second_num){
             //Проверка на переполнение
             if (dop_for_res2==NULL){
                 dop_for_res2=(LINK*)malloc(sizeof(LINK));
+                dop_for_res2->ptype='d';
                 dop_for_res2->foll=NULL;
                 dop_for_res2->prec=dop_for_dop_res2;
                 dop_for_res2->pair.n=0;
@@ -478,6 +485,7 @@ LINK* alghorithm_multyplication(LINK* first_num,LINK* second_num){
             //if (mainpart){
                 if (dop_for_res2->foll==NULL){
                     dop_for_res2->foll=(LINK*)malloc(sizeof(LINK));
+                    dop_for_res2->foll->ptype='d';
                     dop_for_res2->foll->pair.n=0;
                     dop_for_res2->foll->foll=NULL;
                     dop_for_res2->foll->prec=dop_for_res2;
@@ -505,6 +513,7 @@ LINK* alghorithm_multyplication(LINK* first_num,LINK* second_num){
             mnog=first_num->pair.n*dop_for_second_num->pair.n;
             if (dop_for_res2==NULL){
                 dop_for_res2=(LINK*)malloc(sizeof(LINK));
+                dop_for_res2->ptype='d';
                 dop_for_res2->foll=NULL;
                 dop_for_res2->prec=dop_for_dop_res2;
                 dop_for_res2->pair.n=0;
@@ -516,6 +525,7 @@ LINK* alghorithm_multyplication(LINK* first_num,LINK* second_num){
             //if (mainpart){
                 if (dop_for_res2->foll==NULL){
                     dop_for_res2->foll=(LINK*)malloc(sizeof(LINK));
+                    dop_for_res2->foll->ptype='d';
                     dop_for_res2->foll->pair.n=0;
                     dop_for_res2->foll->foll=NULL;
                     dop_for_res2->foll->prec=dop_for_res2;
@@ -532,7 +542,7 @@ LINK* alghorithm_multyplication(LINK* first_num,LINK* second_num){
         dop_for_res2=dop_for_res;
         }    
     }
-    res=DELETE_ZERROW(res);
+    if (res!=NULL) res=DELETE_ZERROW(res);
     return res;
 }
 
@@ -562,23 +572,168 @@ int Compare(LINK* p, LINK* q){
     return 0;
 }
 
+LINK* COPY_LINK(LINK*p){
+    if (p==NULL) return NULL;
+    LINK* res;
+    res=(LINK*)malloc(sizeof(LINK));
+    res->foll=NULL;
+    res->prec=NULL;
+    res->ptype='d';
+    res->pair.n=p->pair.n;
+    LINK* dop_res=res;
+    p=p->foll;
+    while (p!=NULL){
+        dop_res->foll=(LINK*)malloc(sizeof(LINK));
+        dop_res->foll->foll=NULL;
+        dop_res->foll->pair.n=p->pair.n;
+        dop_res->foll->prec=dop_res;
+        dop_res->foll->ptype='d';
+        dop_res=dop_res->foll;
+        p=p->foll;
+    }
+    return res;
+}
+
+//Функция сложения в системе счисления 2^32
+LINK* ADD_LINK(LINK*p, LINK*q){
+    if ((p->ptype=='n')&&(q->ptype=='d')){
+        LINK* p_new;
+        p_new=COPY_LINK(p);
+        p_new=SUB_LINK(q,p_new);
+        return p_new;
+    }
+    else if ((p->ptype=='d')&&(q->ptype=='n')){
+        LINK* q_new;
+        q_new=COPY_LINK(q);
+        q_new=SUB_LINK(p,q_new);
+        return q_new;
+    }
+    LINK* res=(LINK*)malloc(sizeof(LINK));
+    res->foll=NULL;
+    res->prec=NULL;
+    if ((p->ptype=='n')&&(q->ptype=='n')) res->ptype='n';
+    else res->ptype='d';
+    res->pair.n=0;
+    LINK* dop_res=res;
+    if (Size_Link(p)<Size_Link(q)){
+        LINK* dop=p;
+        p=q;
+        q=dop;
+    }
+    while (q!=NULL){
+        unsigned long long num=p->pair.n+q->pair.n+dop_res->pair.n;
+        unsigned long long mainpart=num>>32;
+        unsigned long long ost=num-(mainpart<<32);
+        dop_res->pair.n=ost;
+        dop_res->foll=(LINK*)malloc(sizeof(LINK));
+        dop_res->foll->prec=dop_res;
+        dop_res->foll->ptype='d';
+        dop_res->foll->foll=NULL;
+        dop_res->foll->pair.n=mainpart;
+        q=q->foll;
+        p=p->foll;
+        dop_res=dop_res->foll;
+    }
+    while (p!=NULL){
+        unsigned long long num=p->pair.n+dop_res->pair.n;
+        unsigned long long mainpart=num>>32;
+        unsigned long long ost=num-(mainpart<<32);
+        dop_res->pair.n=ost;
+        dop_res->foll=(LINK*)malloc(sizeof(LINK));
+        dop_res->foll->prec=dop_res;
+        dop_res->foll->ptype='d';
+        dop_res->foll->foll=NULL;
+        dop_res->foll->pair.n=mainpart;
+        p=p->foll;
+        dop_res=dop_res->foll;
+    }
+    res=DELETE_ZERROW(res);
+    return res;
+}
 
 //Вспомогательная! нужна для алгоритма деления в 2^32 системе счисления
-//Функция обрабатывает только случаи, когда p>q 
+//Функция обрабатывает все случаи.........
 LINK* SUB_LINK(LINK*p, LINK*q){
-    if (Compare(p,q)==-1){
-        return NULL;
+    bool flag1=false;
+    if (Compare(p,q)==1){
+        if ((p->ptype=='n')&&(q->ptype=='n')){
+            flag1=true;
+        }
+        else if ((p->ptype=='n')&&(q->ptype=='d')){
+            LINK* res;
+            res=ADD_LINK(p,q);
+            res->ptype='n';
+            return res;
+        }
+        else if ((p->ptype=='d')&&(q->ptype=='n')){
+            LINK* res;
+            res=ADD_LINK(p,q);
+            return res;
+        }
+    }
+    else if (Compare(p,q)==-1){
+        if ((p->ptype=='d')&&(q->ptype=='d')){
+            LINK* dop=p;
+            p=q;
+            q=dop;
+            flag1=true;
+        }
+        else if ((p->ptype=='n')&&(q->ptype=='n')){
+            LINK* dop=p;
+            p=q;
+            q=dop;
+        }
+        else if ((p->ptype=='d')&&(q->ptype=='n')){
+            LINK* res;
+            LINK* new_q=COPY_LINK(q);
+            res=ADD_LINK(p,new_q);
+            return res;
+        }
+        else if ((p->ptype=='n')&&(q->ptype=='d')){
+            LINK* res;
+            LINK* new_p=COPY_LINK(p);
+            res=ADD_LINK(new_p,q);
+            res->ptype='n';
+            return res;
+        }
     } 
-    if (Compare(p,q)==0){
-        LINK* res=(LINK*)malloc(sizeof(LINK));
-        res->pair.n=0;
-        res->foll=NULL;
-        res->prec=NULL;
-        return res;
+    else if (Compare(p,q)==0){
+        if (((p->ptype=='d')&&(q->ptype=='d'))||((p->ptype=='n')&&(q->ptype=='n'))){
+            LINK* res=(LINK*)malloc(sizeof(LINK));
+            res->pair.n=0;
+            res->ptype='d';
+            res->foll=NULL;
+            res->prec=NULL;
+            return res;
+        }
+        else if ((p->ptype=='d')&&(q->ptype=='n')){
+            LINK* res;
+            LINK* mnog;
+            mnog=(LINK*)malloc(sizeof(LINK));
+            mnog->foll=NULL;
+            mnog->prec=NULL;
+            mnog->ptype='d';
+            mnog->pair.n=2;
+            res=alghorithm_multyplication(p,mnog);
+            return res;
+        }
+        else if ((p->ptype=='n')&&(q->ptype=='d')){
+            LINK* res;
+            LINK* mnog;
+            mnog=(LINK*)malloc(sizeof(LINK));
+            mnog->foll=NULL;
+            mnog->prec=NULL;
+            mnog->ptype='n';
+            mnog->pair.n=2;
+            res=alghorithm_multyplication(p,mnog);
+            return res;
+        }
     }
     bool flag =false;
     LINK* res=(LINK*)malloc(sizeof(LINK));
     res->pair.n=0;
+    if (flag1) res->ptype='n';
+    else res->ptype='d';
     res->foll=NULL;
     res->prec=NULL;
     LINK* dop_for_res=res;
@@ -598,16 +753,32 @@ LINK* SUB_LINK(LINK*p, LINK*q){
             flag=true;
         }
         p=p->foll;
-        if (q->foll!=NULL){
-            dop_for_res->foll=(LINK*)malloc(sizeof(LINK));
-            dop_for_res->foll->pair.n=0;
-            dop_for_res->foll->foll=NULL;
-            dop_for_res->foll->prec=dop_for_res;
-        }
+        dop_for_res->foll=(LINK*)malloc(sizeof(LINK));
+        dop_for_res->foll->ptype='d';
+        dop_for_res->foll->pair.n=0;
+        dop_for_res->foll->foll=NULL;
+        dop_for_res->foll->prec=dop_for_res;
         q=q->foll;
         dop_for_res=dop_for_res->foll;
     }
-    res=DELETE_ZERROW(res);
+    while (p!=NULL){
+        unsigned long long num=p->pair.n+dop_for_res->pair.n;
+        if (flag){
+            num-=1;
+            flag=false;
+        }
+        unsigned long long mainpart=num>>32;
+        unsigned long long ost=num-(mainpart<<32);
+        dop_for_res->pair.n=ost;
+        dop_for_res->foll=(LINK*)malloc(sizeof(LINK));
+        dop_for_res->foll->prec=dop_for_res;
+        dop_for_res->foll->ptype='d';
+        dop_for_res->foll->foll=NULL;
+        dop_for_res->foll->pair.n=mainpart;
+        p=p->foll;
+        dop_for_res=dop_for_res->foll;
+    }
+    if (res!=NULL) res=DELETE_ZERROW(res);
     return res;
 }
 
@@ -651,26 +822,37 @@ void Print_Link_reverse(LINK* p){
 
 
 LINK* Div_in_32_system(LINK*a, LINK* b){
-    if ((Size_Link(a)==Size_Link(b)&&(Size_Link(a)==1))){
+    if ((a==NULL)||(b==NULL)) return NULL;
+    if (((Size_Link(a)==Size_Link(b))&&(Size_Link(a)==1))){
         if (!b->pair.n){
             printf("Деление на 0 запрещено\n");
             return NULL;
         }
         LINK* res;
         res=(LINK*)malloc(sizeof(LINK));
+        unsigned long long res1=a->pair.n/b->pair.n;
+        if ((res1)&&(((a->ptype=='d')&&(b->ptype=='n'))||((a->ptype=='n')&&(b->ptype=='d')))) res->ptype='n';
+        else res->ptype='d';
         res->prec=NULL;
         res->foll=NULL;
-        res->pair.n=a->pair.n/b->pair.n;
+        res->pair.n=res1;
         return res;
     }
-    LINK* p;
-    p=(LINK*) malloc(sizeof(LINK));
-    if ((a==NULL)||(b==NULL)) return NULL;
+    if ((Size_Link(a)==1)&&(a->pair.n==0)){
+        LINK* res;
+        res=(LINK*)malloc(sizeof(LINK));
+        res->foll=NULL;
+        res->pair.n=0;
+        res->prec=NULL;
+        res->ptype='d';
+        return res;
+    }
     LINK* bn=reverse(b);
     LINK* normal_a;
     LINK* normal_b;
     LINK* vector_for_normalization=NULL;
     vector_for_normalization=(LINK*)malloc(sizeof(LINK));
+    vector_for_normalization->ptype='d';
     vector_for_normalization->prec=NULL;
     unsigned long long base=4294967296;
     vector_for_normalization->pair.n=(unsigned long) (base/(bn->pair.n+1));
@@ -684,6 +866,7 @@ LINK* Div_in_32_system(LINK*a, LINK* b){
     res->foll=NULL;
     res->prec=NULL;
     res->pair.n=0;
+    res->ptype='d';
     LINK* normal_a_reverse;
     LINK* normal_b_reverse;
     normal_a_reverse=reverse(normal_a);
@@ -694,6 +877,7 @@ LINK* Div_in_32_system(LINK*a, LINK* b){
     q->foll=NULL;
     q->pair.n=normal_a_reverse->pair.n;
     q->prec=NULL;
+    q->ptype='d';
     /*q->foll=(LINK*)malloc(sizeof(LINK));        
     q->foll->foll=NULL;
     q->foll->pair.n=0;
@@ -705,16 +889,15 @@ LINK* Div_in_32_system(LINK*a, LINK* b){
         if (normal_a_reverse->prec==NULL){
             LINK* ost;
             ost=(LINK*)malloc(sizeof(LINK));
-            ost->foll=(LINK*)malloc(sizeof(LINK));
-            ost->foll->prec=ost;
-            ost->foll->foll=NULL;
-            ost->foll->pair.n=0;
+            ost->foll=NULL;
+            ost->ptype='d';
             ost->prec=NULL;
             ost->pair.n=0;
             return ost;
         }
         normal_a_reverse=normal_a_reverse->prec;
         q->prec=malloc(sizeof(LINK));
+        q->prec->ptype='d';
         q->prec->foll=q;
         q->prec->pair.n=normal_a_reverse->pair.n;
         q->prec->prec=NULL;
@@ -744,6 +927,7 @@ LINK* Div_in_32_system(LINK*a, LINK* b){
     else{
         LINK* delta;
         delta=(LINK*)malloc(sizeof(LINK));
+        delta->ptype='d';
         delta->foll=NULL;
         delta->prec=NULL;
         unsigned long long num=(first_num<<32)/normal_b_reverse->pair.n;
@@ -765,11 +949,15 @@ LINK* Div_in_32_system(LINK*a, LINK* b){
         q=SUB_LINK(q,mnog);
         free(delta);
     }
-    if (normal_a_reverse->prec==NULL) return res;
+    if (normal_a_reverse->prec==NULL) {
+        if (((a->ptype=='d')&&(b->ptype=='n'))||((a->ptype=='n')&&(b->ptype=='d'))) res->ptype='n';
+        return res;
+    }
     while (normal_a_reverse!=NULL){
         normal_a_reverse=normal_a_reverse->prec;
         if (normal_a_reverse==NULL) break;
         q->prec=(LINK*)malloc(sizeof(LINK));
+        q->prec->ptype='d';
         q->prec->foll=q;
         q->prec->pair.n=normal_a_reverse->pair.n;
         q->prec->prec=NULL;
@@ -780,6 +968,7 @@ LINK* Div_in_32_system(LINK*a, LINK* b){
         else second_num=reverse_q->prec->pair.n;
         if (Compare(q,normal_b)==-1){
             res->prec=(LINK*)malloc(sizeof(LINK));
+            res->prec->ptype='d';
             res->prec->foll=res;
             res->prec->prec=NULL;
             res->prec->pair.n=0;
@@ -788,12 +977,14 @@ LINK* Div_in_32_system(LINK*a, LINK* b){
         }
         if (first_num>=normal_b_reverse->pair.n){
             res->prec=(LINK*)malloc(sizeof(LINK));
+            res->prec->ptype='d';
             res->prec->foll=res;
             res->prec->prec=NULL;
             res->prec->pair.n=1;
             res=res->prec;
             LINK* for_one_num;
             for_one_num=(LINK*)malloc(sizeof(LINK));
+            for_one_num->ptype='d';
             for_one_num->prec=NULL;
             for_one_num->foll=NULL;
             for_one_num->pair.n=1;
@@ -807,6 +998,7 @@ LINK* Div_in_32_system(LINK*a, LINK* b){
             LINK* delta;
             delta=(LINK*)malloc(sizeof(LINK));
             delta->foll=NULL;
+            delta->ptype='d';
             delta->prec=NULL;
             delta->pair.n=0;
             unsigned long long num=(first_num<<32)/normal_b_reverse->pair.n;
@@ -825,6 +1017,7 @@ LINK* Div_in_32_system(LINK*a, LINK* b){
                 else break;
             }
             res->prec=(LINK*)malloc(sizeof(LINK));
+            res->prec->ptype='d';
             res->prec->foll=res;
             res->prec->prec=NULL;
             res->prec->pair.n=delta->pair.n;
@@ -834,6 +1027,7 @@ LINK* Div_in_32_system(LINK*a, LINK* b){
             q=SUB_LINK(q,mnog);
         }
     }
+    if (((a->ptype=='d')&&(b->ptype=='n'))||((a->ptype=='n')&&(b->ptype=='d'))) res->ptype='n';
     return res;
     
 }
@@ -845,6 +1039,126 @@ LINK* FIND_MOD(LINK*num,LINK* mod){
     q=alghorithm_multyplication(q,mod);
     q=SUB_LINK(num,q);
     return q;
+}
+
+LINK* FREE_MEMBER(LINK*p){
+    while (p->foll!=NULL){
+        LINK* q=p->foll;
+        free(p);
+        p=q;
+    }
+    free(p);
+    return NULL;
+}
+
+LINK* COPY_LINK_1(LINK*p){
+    if (p==NULL) return NULL;
+    LINK* res;
+    res=(LINK*)malloc(sizeof(LINK));
+    res->foll=NULL;
+    res->prec=NULL;
+    res->ptype=p->ptype;
+    res->pair.n=p->pair.n;
+    LINK* dop_res=res;
+    p=p->foll;
+    while (p!=NULL){
+        dop_res->foll=(LINK*)malloc(sizeof(LINK));
+        dop_res->foll->foll=NULL;
+        dop_res->foll->pair.n=p->pair.n;
+        dop_res->foll->prec=dop_res;
+        dop_res->foll->ptype=p->ptype;
+        dop_res=dop_res->foll;
+        p=p->foll;
+    }
+    return res;
+}
+
+
+
+//а-число b-модуль
+
+LINK* extended_euclid(LINK*a, LINK*b){
+    if ((a==NULL)||(b==NULL)) return NULL;
+    LINK* x=NULL;
+    LINK* d=NULL;
+    LINK* Zerrow=NULL;
+    Zerrow=(LINK*)malloc(sizeof(LINK));
+    Zerrow->ptype='d';
+    Zerrow->foll=NULL;
+    Zerrow->prec=NULL;
+    Zerrow->pair.n=0;
+    if ((Size_Link(b)==1)&&(b->pair.n)==0){
+        if ((Size_Link(a)==1)&&(a->pair.n==1)){
+            LINK* res=(LINK*)malloc(sizeof(LINK));
+            res->foll=NULL;
+            res->prec=NULL;
+            res->ptype='d';
+            res->pair.n=1;
+            return res;
+        }
+        else{
+            printf("ERROR!\n");
+            LINK* res=(LINK*)malloc(sizeof(LINK));
+            res->foll=NULL;
+            res->prec=NULL;
+            res->ptype='d';
+            res->pair.n=0;
+            return res;
+        }
+    }
+    LINK* x2=(LINK*)malloc(sizeof(LINK));
+    x2->foll=NULL;
+    x2->pair.n=1;
+    x2->prec=NULL;
+    x2->ptype='d';
+
+    LINK* x1=(LINK*)malloc(sizeof(LINK));
+    x1->foll=NULL;
+    x1->pair.n=0;
+    x1->prec=NULL;
+    x1->ptype='d';
+
+    LINK* q=NULL;
+    LINK* r=NULL;
+
+    LINK* first_num=COPY_LINK_1(a);
+    LINK* second_num=COPY_LINK_1(b);
+
+    while (true){
+        if ((second_num!=NULL)&&(second_num->ptype=='n')) break;
+        if ((second_num!=NULL)&&(Size_Link(second_num)==1)&&(second_num->pair.n==0)) break;
+        if (q!=NULL) q=FREE_MEMBER(q);
+        q=Div_in_32_system(first_num,second_num);
+        if (r!=NULL) r=FREE_MEMBER(r);
+        r=alghorithm_multyplication(q,second_num);
+        r=SUB_LINK(first_num,r);
+        if (x!=NULL) x=FREE_MEMBER(x);
+        x=alghorithm_multyplication(q,x1);
+        x=SUB_LINK(x2,x); 
+        first_num=FREE_MEMBER(first_num);
+        first_num=COPY_LINK_1(second_num);
+        second_num=FREE_MEMBER(second_num);
+        second_num=COPY_LINK_1(r);
+        x2=FREE_MEMBER(x2);
+        x2=COPY_LINK_1(x1);
+        x1=FREE_MEMBER(x1);
+        x1=COPY_LINK_1(x);     
+    }
+    while (x2->ptype=='n'){
+        LINK* q=NULL;
+        q=ADD_LINK(x2,b);
+        x2=FREE_MEMBER(x2);
+        x2=COPY_LINK(q);
+        q=FREE_MEMBER(q);
+    }
+    if ((Size_Link(first_num)==1)&&(first_num->pair.n==1)) return x2;
+    printf("ERRRRRRRRRROR!!!!\n");
+    LINK* res=(LINK*)malloc(sizeof(LINK));
+    res->foll=NULL;
+    res->prec=NULL;
+    res->ptype='d';
+    res->pair.n=0;
+    return res;
 }
 
 
@@ -871,22 +1185,32 @@ int main(){
     LINK* second_number;
     second_number=filling_structure(second_number,NULL,num2,0,false,false);
     LINK* res;
-    double time_spent=0.0;
+    char* check;
+    /*double time_spent=0.0;
     clock_t begin = clock ();
     res=alghorithm_multyplication(first_number,second_number);
     clock_t end = clock();
     time_spent += (double)(end-begin)/CLOCKS_PER_SEC;
-    char* check;
     check=Return_in_decimal_system(res);
     printf("Multyplication result = ");
     for (int i=0;i<strlen(check);i++) printf("%c",check[i]);
     printf("\n");
     printf("\ntime = %f\n",time_spent);
-    res=FIND_MOD(first_number,second_number);
+    */
+    res=extended_euclid(first_number,second_number);
     printf("\n");
     check=Return_in_decimal_system(res);
     printf("Result\n");
     for (int i=0;i<strlen(check);i++) printf("%c",check[i]);
     printf("\n");
+
+    res=alghorithm_multyplication(first_number,res);
+    res=FIND_MOD(res,second_number);
+    printf("\n");
+    check=Return_in_decimal_system(res);
+    printf("Result\n");
+    for (int i=0;i<strlen(check);i++) printf("%c",check[i]);
+    printf("\n");
+    
     return 0;
 }
