@@ -49,12 +49,19 @@ char* Copy_and_add(char* chastnoe,char dopper){
 
 }
 
+typedef struct num_for_file{
+    char* num;
+    bool flag;
+}NUM_FILE;
+
 
 
 //Функция чтения из файла
 //Для запуска необходимо создать char* chastnoe, а также выделить ему память
 //также должен быть запущен файл, из которого берем тестовые данные 
-char* read_num_from_file_2(char* chastnoe,FILE* fp){
+NUM_FILE* read_num_from_file_2(char* chastnoe,FILE* fp){
+    NUM_FILE* num_res=(NUM_FILE*)malloc(sizeof(NUM_FILE));
+    num_res->flag=false;
     char* res=malloc(2);
     res[1]='\0';
     char one_symbol;
@@ -65,6 +72,7 @@ char* read_num_from_file_2(char* chastnoe,FILE* fp){
     bool flag = false;
     while (true){
         one_symbol=fgetc(fp);
+        if (one_symbol==EOF) num_res->flag=true;
         if ((one_symbol=='\n')||(one_symbol==EOF)){
             res[0]=(number+'0');
             break; 
@@ -81,7 +89,10 @@ char* read_num_from_file_2(char* chastnoe,FILE* fp){
         flag=true;
         number=number - (dopper<<1);
     }
-    if (!flag) return res;
+    if (!flag) {
+        num_res->num=res;
+        return num_res;
+    }
     while (true){
         number=0;
         char* dopchastnoe;
@@ -113,7 +124,8 @@ char* read_num_from_file_2(char* chastnoe,FILE* fp){
         chastnoe[strlen(dopchastnoe)]='\0';
         free(dopchastnoe);
     }
-    return res;
+    num_res->num=res;
+    return num_res;
 }
 
 //Функция сопоставления строки, полученной в предыдущей функции, и стуктуры LINK
@@ -596,6 +608,8 @@ LINK* COPY_LINK(LINK*p){
 
 //Функция сложения в системе счисления 2^32
 LINK* ADD_LINK(LINK*p, LINK*q){
+    if ((Size_Link(p)==1)&&(p->pair.n==0)) return q;
+    if ((Size_Link(q)==1)&&(q->pair.n==0)) return p;
     if ((p->ptype=='n')&&(q->ptype=='d')){
         LINK* p_new;
         p_new=COPY_LINK(p);
@@ -1127,29 +1141,29 @@ LINK* extended_euclid(LINK*a, LINK*b){
     while (true){
         if ((second_num!=NULL)&&(second_num->ptype=='n')) break;
         if ((second_num!=NULL)&&(Size_Link(second_num)==1)&&(second_num->pair.n==0)) break;
-        if (q!=NULL) q=FREE_MEMBER(q);
+        //if (q!=NULL) q=FREE_MEMBER(q);
         q=Div_in_32_system(first_num,second_num);
-        if (r!=NULL) r=FREE_MEMBER(r);
+        //if (r!=NULL) r=FREE_MEMBER(r);
         r=alghorithm_multyplication(q,second_num);
         r=SUB_LINK(first_num,r);
-        if (x!=NULL) x=FREE_MEMBER(x);
+        //if (x!=NULL) x=FREE_MEMBER(x);
         x=alghorithm_multyplication(q,x1);
         x=SUB_LINK(x2,x); 
-        first_num=FREE_MEMBER(first_num);
-        first_num=COPY_LINK_1(second_num);
-        second_num=FREE_MEMBER(second_num);
-        second_num=COPY_LINK_1(r);
-        x2=FREE_MEMBER(x2);
-        x2=COPY_LINK_1(x1);
-        x1=FREE_MEMBER(x1);
-        x1=COPY_LINK_1(x);     
+        first_num=second_num;
+        //first_num=FREE_MEMBER(first_num);
+        //first_num=COPY_LINK_1(second_num);
+        //second_num=FREE_MEMBER(second_num);
+        //second_num=COPY_LINK_1(r);
+        second_num=r;
+        //x2=FREE_MEMBER(x2);
+        //x2=COPY_LINK_1(x1);
+        x2=x1;
+        x1=x;
+        //x1=FREE_MEMBER(x1);
+        //x1=COPY_LINK_1(x);     
     }
     while (x2->ptype=='n'){
-        LINK* q=NULL;
-        q=ADD_LINK(x2,b);
-        x2=FREE_MEMBER(x2);
-        x2=COPY_LINK(q);
-        q=FREE_MEMBER(q);
+       x2=ADD_LINK(x2,b);
     }
     if ((Size_Link(first_num)==1)&&(first_num->pair.n==1)) return x2;
     printf("ERRRRRRRRRROR!!!!\n");
@@ -1162,55 +1176,214 @@ LINK* extended_euclid(LINK*a, LINK*b){
 }
 
 
-int main(){
-    LINK* first_number;
-    first_number=NULL;
-    char* chastnoe=malloc(sizeof(char)*1);
-    chastnoe[0]='\0';
-    char* num1;
+
+
+typedef struct M_i{
+	LINK* num;
+    struct M_i* next;
+}M_I;
+
+LINK* FIND_M(M_I* m){
+    LINK* res=m->num;
+    m=m->next;
+    while (m!=NULL){
+        res=alghorithm_multyplication(res,m->num);
+        m=m->next;
+    }
+    return res;
+}
+
+
+M_I* FIND_ALL_R_I(LINK* multy, M_I* m_i){
+    if ((multy==NULL)||(m_i==NULL)) return NULL;
+    M_I* res=(M_I*)malloc(sizeof(M_I));
+    res->num=FIND_MOD(multy,m_i->num);
+    res->next=NULL;
+    M_I* dop_res=res;
+    m_i=m_i->next;
+    while (m_i!=NULL){
+        dop_res->next=(M_I*)malloc(sizeof(M_I));
+        dop_res->next->num=FIND_MOD(multy,m_i->num);
+        dop_res->next->next=NULL;
+        m_i=m_i->next;
+        dop_res=dop_res->next;
+    }
+    return res;
+} 
+
+LINK* chinese_theorema(M_I* m_i,M_I* r_i,LINK* M){
+    LINK* x=(LINK*)malloc(sizeof(LINK));
+    x->foll=NULL;
+    x->pair.n=0;
+    x->prec=NULL;
+    x->ptype='d';
+    while (m_i!=NULL){
+        char* check;
+        LINK* y_i=NULL;
+        y_i=Div_in_32_system(M,m_i->num);
+        LINK* s_i=extended_euclid(y_i,m_i->num);
+        LINK* c_i=alghorithm_multyplication(r_i->num,s_i);
+        c_i=FIND_MOD(c_i,m_i->num);
+        LINK* x_dop=NULL;
+        x_dop=alghorithm_multyplication(c_i,y_i);
+        x_dop=FIND_MOD(x_dop,M);
+        x=ADD_LINK(x,x_dop);
+        m_i=m_i->next;
+        r_i=r_i->next;
+    }
+    x=FIND_MOD(x,M);
+    if ((Size_Link(x)!=1)&&(x->pair.n!=0)) x=DELETE_ZERROW(x);
+    return x;
+
+}
+
+int generation_number(long degree){
+    //unsigned long long quantity_numbers=find_quantity_of_num_for_generation();
     FILE* fp;
     char name[]="example.txt";
-    if ((fp= fopen(name,"r"))==NULL){
+    if ((fp= fopen(name,"w"))==NULL){
         printf("Error!");
+        return -1;
+    }
+    for (int j=0;j<2;j++){
+        for (long i=0;i<degree;i++) fprintf(fp,"%d",rand()%10);
+        fprintf(fp,"\n");
+    }
+    //Указывается вручную разложение модуля M
+    fprintf(fp,"7\n199\n3557");
+    fclose(fp);
+    return 0;
+}
+
+int Create_Output(long len,double time1, double time2,int num_of_iterations){
+    FILE* fp;
+    char name[]="output.txt";
+    if ((fp= fopen(name,"w"))==NULL){
+        printf("Error!");
+        return -1;
+    }
+    double time=time1/num_of_iterations;
+    fprintf(fp,"Len = %ld\n",len);
+    fprintf(fp,"time standart alghorithm = %f\ntime Chinese alghotythm = %f",time,time2/num_of_iterations);
+    fclose(fp);
+    return 0;
+
+}
+
+int Create_Error_output(int num_of_iterations,LINK* first_number,LINK* second_number,LINK* res1,LINK* res2){
+    FILE* fp;
+    char name[]="output.txt";
+    if ((fp= fopen(name,"w"))==NULL){
+        printf("Error!");
+        return -1;
+    }
+
+    fprintf(fp,"Error answer! Num of test = %d\n",num_of_iterations);
+    fprintf(fp,"Num: ");
+    char* check;
+    check=Return_in_decimal_system(first_number);
+    for (int i=0;i<strlen(check);i++)fprintf(fp,"%c",check[i]);
+    fprintf(fp," ");
+    check=Return_in_decimal_system(second_number);
+    for (int i=0;i<strlen(check);i++)fprintf(fp,"%c",check[i]);
+    fprintf(fp,"\nThe result of the standart alghorithm = ");
+    check=Return_in_decimal_system(res1);
+    for (int i=0;i<strlen(check);i++)fprintf(fp,"%c",check[i]);
+    fprintf(fp,"\nThe result of the chinese alghorithm = ");
+    check=Return_in_decimal_system(res2);
+    for (int i=0;i<strlen(check);i++)fprintf(fp,"%c",check[i]);
+    fclose(fp);
+    return 0;    
+}
+
+
+int main(int argc,char** argv){
+    if (argc<=1){
+        printf("Error");
         return 0;
     }
-    num1=read_num_from_file_2(chastnoe,fp);
-    free(chastnoe);
-    chastnoe=malloc(sizeof(char)*1);
-    chastnoe[0]='\0';
-    char* num2;
-    num2=read_num_from_file_2(chastnoe,fp);
-    fclose(fp);
-    first_number=filling_structure(first_number,NULL,num1,0,false,false);
-    LINK* second_number;
-    second_number=filling_structure(second_number,NULL,num2,0,false,false);
-    LINK* res;
-    char* check;
-    /*double time_spent=0.0;
-    clock_t begin = clock ();
-    res=alghorithm_multyplication(first_number,second_number);
-    clock_t end = clock();
-    time_spent += (double)(end-begin)/CLOCKS_PER_SEC;
-    check=Return_in_decimal_system(res);
-    printf("Multyplication result = ");
-    for (int i=0;i<strlen(check);i++) printf("%c",check[i]);
-    printf("\n");
-    printf("\ntime = %f\n",time_spent);
-    */
-    res=extended_euclid(first_number,second_number);
-    printf("\n");
-    check=Return_in_decimal_system(res);
-    printf("Result\n");
-    for (int i=0;i<strlen(check);i++) printf("%c",check[i]);
-    printf("\n");
-
-    res=alghorithm_multyplication(first_number,res);
-    res=FIND_MOD(res,second_number);
-    printf("\n");
-    check=Return_in_decimal_system(res);
-    printf("Result\n");
-    for (int i=0;i<strlen(check);i++) printf("%c",check[i]);
-    printf("\n");
-    
+    long a;
+    a=strtol(argv[1],NULL,10);
+    long num_of_repeat_program=strtol(argv[2],NULL,10);
+    double time_spent_standart_alghorythm=0.0;
+    double time_spent_chinese_alghorythm=0.0;
+    long num_of_iterations=num_of_repeat_program;
+    while (num_of_repeat_program){
+        if (generation_number(a)==-1) return 0;
+        LINK* first_number;
+        first_number=NULL;
+        char* chastnoe=malloc(sizeof(char)*1);
+        chastnoe[0]='\0';
+        char* num1;
+        FILE* fp;
+        char name[]="example.txt";
+        if ((fp= fopen(name,"r"))==NULL){
+            printf("Error!");
+            return 0;
+        }
+        num1=read_num_from_file_2(chastnoe,fp)->num;
+        free(chastnoe);
+        chastnoe=malloc(sizeof(char)*1);
+        chastnoe[0]='\0';
+        char* num2;
+        num2=read_num_from_file_2(chastnoe,fp)->num;
+        free(chastnoe);
+        chastnoe=malloc(sizeof(char)*1);
+        chastnoe[0]='\0';
+        NUM_FILE* m_i=NULL;
+        M_I* many_mod=NULL;
+        m_i=read_num_from_file_2(chastnoe,fp);
+        char* mod=m_i->num;
+        many_mod=(M_I*)malloc(sizeof(M_I));
+        many_mod->num=filling_structure(many_mod->num,NULL,mod,0,false,false);
+        many_mod->next=NULL;
+        M_I* dop_many_mod=many_mod;
+        while (!m_i->flag){
+            free(chastnoe);
+            chastnoe=malloc(sizeof(char)*1);
+            chastnoe[0]='\0';
+            free(m_i);
+            m_i=read_num_from_file_2(chastnoe,fp);
+            free(mod);
+            mod=m_i->num;
+            dop_many_mod->next=(M_I*)malloc(sizeof(M_I));
+            dop_many_mod->next->num=filling_structure(dop_many_mod->next->num,NULL,mod,0,false,false);
+            dop_many_mod->next->next=NULL;
+            dop_many_mod=dop_many_mod->next;
+        }
+        fclose(fp);
+        char* check;
+        LINK* M=FIND_M(many_mod);
+        first_number=filling_structure(first_number,NULL,num1,0,false,false);
+        LINK* second_number;
+        second_number=filling_structure(second_number,NULL,num2,0,false,false);
+        LINK* res;
+        clock_t begin = clock ();
+        res=alghorithm_multyplication(first_number,second_number);
+        clock_t end = clock();
+        time_spent_standart_alghorythm += (double)(end-begin)/CLOCKS_PER_SEC;
+        check=Return_in_decimal_system(res);
+        printf("Multyplication result = ");
+        for (int i=0;i<strlen(check);i++) printf("%c",check[i]);
+        printf("\n");
+        //printf("\ntime = %f\n",time_spent);
+        M_I* r_i=FIND_ALL_R_I(res,many_mod);
+        LINK* res2;
+        begin = clock ();
+        res2=chinese_theorema(many_mod,r_i,M);
+        end = clock();
+        check=Return_in_decimal_system(res2);
+        printf("CHINESE result = ");
+        for (int i=0;i<strlen(check);i++) printf("%c",check[i]);
+        time_spent_chinese_alghorythm += (double)(end-begin)/CLOCKS_PER_SEC;
+        //printf("\ntime = %f\n\n",time_spent);
+        printf("\n\n");
+        if (Compare(res,res2)!=0){
+            Create_Error_output(num_of_iterations-num_of_repeat_program,first_number,second_number,res,res2);
+            return 0;
+        }
+        num_of_repeat_program-=1;
+    }
+    int output=Create_Output(a,time_spent_standart_alghorythm,time_spent_chinese_alghorythm,num_of_iterations);
     return 0;
 }
