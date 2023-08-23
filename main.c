@@ -955,7 +955,7 @@ LINK* Div_in_32_system(LINK*a, LINK* b){
         delta->prec=NULL;
         unsigned long long num=(first_num<<32)/normal_b_reverse->pair.n;
         unsigned long long num2=second_num/normal_b_reverse->pair.n;
-        num=num+num2+5;
+        num=num+num2+2;
         if (num<=base_without_1) {
             delta->pair.n=num;
         }
@@ -1026,7 +1026,7 @@ LINK* Div_in_32_system(LINK*a, LINK* b){
             delta->pair.n=0;
             unsigned long long num=(first_num<<32)/normal_b_reverse->pair.n;
             unsigned long long num2=second_num/normal_b_reverse->pair.n;
-            num=num+num2+5;
+            num=num+num2+2;
             if (num<=base_without_1) {
                 delta->pair.n=num;
             }
@@ -1224,7 +1224,7 @@ M_I* FIND_ALL_R_I(LINK* multy, M_I* m_i){
     return res;
 } 
 
-LINK* chinese_theorema(M_I* m_i,M_I* r_i,LINK* M){
+LINK* chinese_theorema(M_I* m_i,M_I* r_i,LINK* M,M_I* y_i){
     LINK* x=(LINK*)malloc(sizeof(LINK));
     x->foll=NULL;
     x->pair.n=0;
@@ -1232,22 +1232,37 @@ LINK* chinese_theorema(M_I* m_i,M_I* r_i,LINK* M){
     x->ptype='d';
     while (m_i!=NULL){
         char* check;
-        LINK* y_i=NULL;
-        y_i=Div_in_32_system(M,m_i->num);
-        LINK* s_i=extended_euclid(y_i,m_i->num);
+        LINK* s_i=extended_euclid(y_i->num,m_i->num);
         LINK* c_i=alghorithm_multyplication(r_i->num,s_i);
         c_i=FIND_MOD(c_i,m_i->num);
         LINK* x_dop=NULL;
-        x_dop=alghorithm_multyplication(c_i,y_i);
+        x_dop=alghorithm_multyplication(c_i,y_i->num);
         x_dop=FIND_MOD(x_dop,M);
         x=ADD_LINK(x,x_dop);
         m_i=m_i->next;
         r_i=r_i->next;
+        y_i=y_i->next;
     }
     x=FIND_MOD(x,M);
     if ((Size_Link(x)!=1)&&(x->pair.n!=0)) x=DELETE_ZERROW(x);
     return x;
 
+}
+
+M_I* FIND_ALL_yi(M_I* m_i,LINK* M){
+    M_I* y_i=(M_I*)malloc(sizeof(M_I));
+    y_i->num=Div_in_32_system(M,m_i->num);
+    y_i->next=NULL;
+    m_i=m_i->next;
+    M_I* dop_for_y_i=y_i;
+    while (m_i!=NULL){
+        dop_for_y_i->next=(M_I*)malloc(sizeof(M_I));
+        dop_for_y_i->next->num=Div_in_32_system(M,m_i->num);
+        dop_for_y_i->next->next=NULL;
+        m_i=m_i->next;
+        dop_for_y_i=dop_for_y_i->next;
+    }
+    return y_i;
 }
 
 int generation_number(long degree){
@@ -1263,7 +1278,7 @@ int generation_number(long degree){
         fprintf(fp,"\n");
     }
     //Указывается вручную разложение модуля M
-    fprintf(fp,"3\n7\n31\n127\n8191\n131071\n524287\n2147483647\n2305843009213693951");
+    fprintf(fp,"3\n7\n31\n127\n8191\n131071\n524287\n2147483647\n2305843009213693951\n146150163733090291820368483271628301965593254297");
     fclose(fp);
     return 0;
 }
@@ -1381,10 +1396,10 @@ int main(int argc,char** argv){
         printf("\n");
         //printf("\ntime = %f\n",time_spent);
         M_I* r_i=FIND_ALL_R_I(res,many_mod);
-        
+        M_I* y_i=FIND_ALL_yi(many_mod,M);
         LINK* res2;
         begin = clock ();
-        res2=chinese_theorema(many_mod,r_i,M);
+        res2=chinese_theorema(many_mod,r_i,M,y_i);
         end = clock();
         check=Return_in_decimal_system(res2);
         printf("CHINESE result = ");
