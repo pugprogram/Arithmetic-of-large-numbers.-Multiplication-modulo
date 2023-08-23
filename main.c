@@ -1055,7 +1055,7 @@ LINK* Div_in_32_system(LINK*a, LINK* b){
     
 }
 
-//Я БОЛЬШЕ НЕ МОГУ(((((((((((((
+
 LINK* FIND_MOD(LINK*num,LINK* mod){
     LINK*q;
     char* check;
