@@ -5,7 +5,7 @@
 #include <math.h>
 #include <stdbool.h>
 #include <time.h>
-#define INT_MAX 18446744073709551615
+//#define INT_MAX 18446744073709551615
 
 typedef struct link{
 	char ptype; /* type of the link */
@@ -837,6 +837,15 @@ void Print_Link_reverse(LINK* p){
 
 LINK* Div_in_32_system(LINK*a, LINK* b){
     if ((a==NULL)||(b==NULL)) return NULL;
+    if (Compare(a,b)==-1){
+        LINK* res;
+        res=(LINK*)malloc(sizeof(LINK));
+        res->pair.n=0;
+        res->foll=NULL;
+        res->prec=NULL;
+        res->ptype='d';
+        return res;
+    }
     if (((Size_Link(a)==Size_Link(b))&&(Size_Link(a)==1))){
         if (!b->pair.n){
             printf("Деление на 0 запрещено\n");
@@ -1049,7 +1058,10 @@ LINK* Div_in_32_system(LINK*a, LINK* b){
 //Я БОЛЬШЕ НЕ МОГУ(((((((((((((
 LINK* FIND_MOD(LINK*num,LINK* mod){
     LINK*q;
+    char* check;
+
     q=Div_in_32_system(num,mod);
+
     q=alghorithm_multyplication(q,mod);
     q=SUB_LINK(num,q);
     return q;
@@ -1203,6 +1215,7 @@ M_I* FIND_ALL_R_I(LINK* multy, M_I* m_i){
     m_i=m_i->next;
     while (m_i!=NULL){
         dop_res->next=(M_I*)malloc(sizeof(M_I));
+        //dop_res->next->num=m_i->num;
         dop_res->next->num=FIND_MOD(multy,m_i->num);
         dop_res->next->next=NULL;
         m_i=m_i->next;
@@ -1250,7 +1263,7 @@ int generation_number(long degree){
         fprintf(fp,"\n");
     }
     //Указывается вручную разложение модуля M
-    fprintf(fp,"7\n199\n3557");
+    fprintf(fp,"3\n7\n31\n127\n8191\n131071\n524287\n2147483647\n2305843009213693951");
     fclose(fp);
     return 0;
 }
@@ -1368,6 +1381,7 @@ int main(int argc,char** argv){
         printf("\n");
         //printf("\ntime = %f\n",time_spent);
         M_I* r_i=FIND_ALL_R_I(res,many_mod);
+        
         LINK* res2;
         begin = clock ();
         res2=chinese_theorema(many_mod,r_i,M);
@@ -1382,6 +1396,7 @@ int main(int argc,char** argv){
             Create_Error_output(num_of_iterations-num_of_repeat_program,first_number,second_number,res,res2);
             return 0;
         }
+        
         num_of_repeat_program-=1;
     }
     int output=Create_Output(a,time_spent_standart_alghorythm,time_spent_chinese_alghorythm,num_of_iterations);
