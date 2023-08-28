@@ -48,7 +48,8 @@ char* Copy_and_add(char* chastnoe,char dopper){
     return chastnoe;
 
 }
-
+//Структура для получения числа из файла
+//Флаг используется для обозначения конца файла
 typedef struct num_for_file{
     char* num;
     bool flag;
@@ -357,6 +358,7 @@ typedef struct Ost_And_Res{
     unsigned long ost;
 }RES;
 
+//Функция деления в 10-тичной системе счисления (P.S не понадобилась)
 RES* division_in_ten_system(char* mnog){
     RES* p =(RES*) malloc(sizeof(RES));
     char* res=malloc(sizeof(char));
@@ -413,7 +415,7 @@ RES* division_in_ten_system(char* mnog){
     p->res=strtoul(res,NULL,10);
     return p;
 }
-
+//Функция, которая возвращает указатель на начало числа (в обычном числе храним указатель на младшие разряды)
 LINK* reverse(LINK* p){
     if (p->foll==NULL) return p;
     while (p->foll->foll!=NULL) p=p->foll;
@@ -584,6 +586,8 @@ int Compare(LINK* p, LINK* q){
     return 0;
 }
 
+
+//Функция копирования числа
 LINK* COPY_LINK(LINK*p){
     if (p==NULL) return NULL;
     LINK* res;
@@ -825,7 +829,7 @@ int Compare_For_Not_Reverse(LINK* p, LINK* q){
 }
 
 
-
+//Функция печати числа
 void Print_Link_reverse(LINK* p){
     if (p!=NULL){
         printf("%ld\n",p->pair.n);
@@ -834,7 +838,7 @@ void Print_Link_reverse(LINK* p){
 }
 
 
-
+//Функция деления в системе счисления 2^32
 LINK* Div_in_32_system(LINK*a, LINK* b){
     if ((a==NULL)||(b==NULL)) return NULL;
     if (Compare(a,b)==-1){
@@ -1055,7 +1059,7 @@ LINK* Div_in_32_system(LINK*a, LINK* b){
     
 }
 
-
+//Функция нахождения остатка от числа
 LINK* FIND_MOD(LINK*num,LINK* mod){
     LINK*q;
     char* check;
@@ -1067,6 +1071,7 @@ LINK* FIND_MOD(LINK*num,LINK* mod){
     return q;
 }
 
+//Функция освобождения памяти 
 LINK* FREE_MEMBER(LINK*p){
     while (p->foll!=NULL){
         LINK* q=p->foll;
@@ -1076,6 +1081,7 @@ LINK* FREE_MEMBER(LINK*p){
     free(p);
     return NULL;
 }
+
 
 LINK* COPY_LINK_1(LINK*p){
     if (p==NULL) return NULL;
@@ -1100,9 +1106,10 @@ LINK* COPY_LINK_1(LINK*p){
 }
 
 
-
+//Расширенный алгоритм Евклида
+//Используется для нахождения обратного элемента по модулю
+//Используем тот факт, что gcd(a,b)=1
 //а-число b-модуль
-
 LINK* extended_euclid(LINK*a, LINK*b){
     if ((a==NULL)||(b==NULL)) return NULL;
     LINK* x=NULL;
@@ -1189,12 +1196,13 @@ LINK* extended_euclid(LINK*a, LINK*b){
 
 
 
-
+//Структура для хранения всех Mi, из который состоит модуль
 typedef struct M_i{
 	LINK* num;
-    struct M_i* next;
+	struct M_i* next;
 }M_I;
 
+//Нахождение целого модуля M
 LINK* FIND_M(M_I* m){
     LINK* res=m->num;
     m=m->next;
@@ -1205,7 +1213,7 @@ LINK* FIND_M(M_I* m){
     return res;
 }
 
-
+//Находит все остатки (a*b)mod M
 M_I* FIND_ALL_R_I(LINK* multy, M_I* m_i){
     if ((multy==NULL)||(m_i==NULL)) return NULL;
     M_I* res=(M_I*)malloc(sizeof(M_I));
@@ -1224,6 +1232,7 @@ M_I* FIND_ALL_R_I(LINK* multy, M_I* m_i){
     return res;
 } 
 
+//Китайская теорема об остатках
 LINK* chinese_theorema(M_I* m_i,M_I* r_i,LINK* M,M_I* y_i){
     LINK* x=(LINK*)malloc(sizeof(LINK));
     x->foll=NULL;
@@ -1248,7 +1257,7 @@ LINK* chinese_theorema(M_I* m_i,M_I* r_i,LINK* M,M_I* y_i){
     return x;
 
 }
-
+//yi=M/Mi
 M_I* FIND_ALL_yi(M_I* m_i,LINK* M){
     M_I* y_i=(M_I*)malloc(sizeof(M_I));
     y_i->num=Div_in_32_system(M,m_i->num);
@@ -1264,7 +1273,7 @@ M_I* FIND_ALL_yi(M_I* m_i,LINK* M){
     }
     return y_i;
 }
-
+//Функция генерации чисел
 int generation_number(long degree){
     //unsigned long long quantity_numbers=find_quantity_of_num_for_generation();
     FILE* fp;
@@ -1283,6 +1292,7 @@ int generation_number(long degree){
     return 0;
 }
 
+//Создание файла вывода
 int Create_Output(long len,double time1, double time2,int num_of_iterations){
     FILE* fp;
     char name[]="output.txt";
@@ -1298,6 +1308,7 @@ int Create_Output(long len,double time1, double time2,int num_of_iterations){
 
 }
 
+//Создание ошибочного файла вывода в случае несоответствия ответов стандартного алгоритма и алгоритма умножения по китайской теореме об остатках
 int Create_Error_output(int num_of_iterations,LINK* first_number,LINK* second_number,LINK* res1,LINK* res2){
     FILE* fp;
     char name[]="output.txt";
